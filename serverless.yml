@@ -1,0 +1,14 @@
+service: nanopoll-tag
+
+plugins:
+  - serverless-finch
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'test'}
+  region: eu-west-1
+
+custom:
+  client:
+    bucketName: swn-generators
+    distributionFolder: dist
