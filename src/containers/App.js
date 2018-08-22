@@ -15,7 +15,7 @@ export default class App extends Component {
   }
 
   render() {
-    const { ship, ship: { purpose, hullType, complication, state } } = this.state
+    const { ship, ship: { purpose, hullType, complication, state, fittings, defences } } = this.state
     return (
       <div>
         <h1>SWN Generators</h1>
@@ -23,45 +23,46 @@ export default class App extends Component {
         <div>The red items are placeholders and will not be randomized</div>
         <h2>Ship</h2>
         <Row>
-          <Label red>Name: </Label>
+          <Label red>Name:</Label>
           <Attribute>Feri Voyager</Attribute>
         </Row>
         <Row>
-          <Label red>Captain Name: </Label>
+          <Label red>Captain Name:</Label>
           <Attribute>Max Kennedy</Attribute>
         </Row>
         <Row>
-          <Label>Hull Type: </Label>
+          <Label>Hull Type:</Label>
           <Attribute>{hullType.value}</Attribute>
         </Row>
         <Row>
-         <Label>Purpose: </Label>
+         <Label>Purpose:</Label>
           <Attribute>{purpose.value}</Attribute>
         </Row>
         <Row>
-          <Label>State: </Label>
+          <Label>State:</Label>
           <Attribute>{state}</Attribute>
         </Row>
         <Row>
-          <Label>Complication: </Label>
+          <Label>Complication:</Label>
           <Attribute>{complication}</Attribute>
         </Row>
         <Row>
-          <Label red>Weapons: </Label>
+          <Label red>Weapons:</Label>
           <Attribute>Plasma Beam (+4/3d6, AP 10)</Attribute>
         </Row>
         <Row>
-          <Label red>Defenses: </Label>
-          <Attribute>None</Attribute>
-        </Row>
-        <Row>
-          <Label red>Fittings: </Label>
+          <Label red>Defenses:</Label>
           <Attribute>
             <ul>
-              <li>Atmospheric Configuration</li>
-              <li>Boarding Tubes</li>
-              <li>Armory</li>
-              <li>Survey Sensors</li>
+              {defences.map(defence => <li>{defence.value}</li>)}
+            </ul>
+          </Attribute>
+        </Row>
+        <Row>
+          <Label red>Fittings:</Label>
+          <Attribute>
+            <ul>
+              {fittings.map(fitting => <li>{fitting.value}</li>)}
             </ul>
           </Attribute>
         </Row>
