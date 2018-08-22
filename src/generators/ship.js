@@ -1,28 +1,38 @@
 import { pickRandom, pickWeightedRandom } from '../util/random'
 import { buyMostExpensive, generateMoney, buyRandom, calculateCostForHullClass } from '../util/money'
+import { calculateMassForHullClass } from '../util/mass'
+import { calculatePowerForHullClass } from '../util/power'
 
 export function generateShip() {
   let fittings = []
   let defences = []
   let weapons = []
   const purpose = generatePurpose()
-  let money = generateMoney(purpose.minMoney, purpose.maxMoney)
-  const startMoney = money
-  const hullType = generateHullType(money)
-  money = money - hullType.cost
-  const fitting = generateFitting(money, hullType.hullClass)
-  money = money - calculateCostForHullClass(fitting, hullType.hullClass)
-  fittings = [ ...fittings, fitting]
-  const defence = generateDefence(money, hullType.hullClass)
-  money = money - calculateCostForHullClass(defence, hullType.hullClass)
+  let startMoney = generateMoney(purpose.minMoney, purpose.maxMoney)
+  const hullType = generateHullType(startMoney)
+  let { power, mass, hard } = hullType
+  let resources = { money: startMoney, power, mass, hard }
+  resources.money = resources.money - hullType.cost
+  const defence = generateDefence(resources, hullType.hullClass, defences)
+  calculateResources(resources, hullType, defence)
   defences = [ ...defences, defence]
+  let fitting = true
+  while (fitting) {
+    fitting = generateFitting(resources, hullType.hullClass, fittings)
+    if (fitting) {
+      resources = calculateResources(resources, hullType, fitting)
+      fittings = [ ...fittings, fitting]
+    }
+  }
   return {
     purpose,
     hullType,
     complication: generateComplication(),
     state: generateState(),
     fittings,
-    defences
+    defences,
+    resources,
+    startMoney,
   }
 }
 
@@ -44,16 +54,16 @@ export function generatePurpose() {
 
 export function generateHullType(money) {
   const options = [
-    { value: 'Strike Fighter', cost: 200000, hullClass: 'Fighter' },
-    { value: 'Shuttle', cost: 200000, hullClass: 'Fighter' },
-    { value: 'Free Merchant', cost: 500000, hullClass: 'Fighter' },
-    { value: 'Patrol Boat', cost: 2500000, hullClass: 'Fighter' },
-    { value: 'Corvette', cost: 4000000, hullClass: 'Fighter' },
-    { value: 'Heavy Frigate', cost: 7000000, hullClass: 'Fighter' },
-    { value: 'Bulk Freighter', cost: 5000000, hullClass: 'Cruiser' },
-    { value: 'Fleet Cruiser', cost: 10000000, hullClass: 'Cruiser' },
-    { value: 'Battleship', cost: 50000000, hullClass: 'Capital' },
-    { value: 'Carrier', cost: 60000000, hullClass: 'Capital' },
+    { value: 'Strike Fighter', cost: 200000, hullClass: 'Fighter', power: 5, mass: 2, hard: 1 },
+    { value: 'Shuttle', cost: 200000, hullClass: 'Fighter', power: 3, mass: 5, hard: 1 },
+    { value: 'Free Merchant', cost: 500000, hullClass: 'Fighter', power: 10, mass: 15, hard: 2 },
+    { value: 'Patrol Boat', cost: 2500000, hullClass: 'Fighter', power: 15, mass: 10, hard: 4 },
+    { value: 'Corvette', cost: 4000000, hullClass: 'Fighter', power: 15, mass: 15, hard: 6 },
+    { value: 'Heavy Frigate', cost: 7000000, hullClass: 'Fighter', power: 25, mass: 20, hard: 8 },
+    { value: 'Bulk Freighter', cost: 5000000, hullClass: 'Cruiser', power: 15, mass: 25, hard: 2 },
+    { value: 'Fleet Cruiser', cost: 10000000, hullClass: 'Cruiser', power: 50, mass: 30, hard: 10 },
+    { value: 'Battleship', cost: 50000000, hullClass: 'Capital', power: 75, mass: 50, hard: 15 },
+    { value: 'Carrier', cost: 60000000, hullClass: 'Capital', power: 50, mass: 100, hard: 4 },
   ]
   return buyMostExpensive(options, money)
 }
@@ -90,7 +100,7 @@ export function generateState() {
   return pickRandom(options)
 }
 
-export function generateFitting(money, hullClass) {
+export function generateFitting(resources, hullClass, fittings) {
   const options = [
     { value: 'Advanced lab',               cost: 10000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 2,   massMultiplier: false, hullClass: 'Frigate' },
     { value: 'Advanced nav computer',      cost: 10000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
@@ -139,10 +149,10 @@ export function generateFitting(money, hullClass) {
     { value: 'Workshop',                   cost: 500,     costMultiplier: true,  power: 1, powerMultiplier: false, mass: 0.5, massMultiplier: true,  hullClass: 'Frigate' },
   ]
   const fittingsForHullClass = filterByHullClass(options, hullClass)
-  return buyRandom(options, hullClass, money)
+  return buyRandom(options, hullClass, resources, fittings)
 }
 
-export function generateDefence(money, hullClass) {
+export function generateDefence(resources, hullClass, defences) {
   const options = [
     { value: 'Ablative Hull Compartments',   cost: 100000, costMultiplier: true, power: 5, powerMultiplier: false, mass: 2, massMultiplier: true, hullClass: 'Capital' },
     { value: 'Augmented Plating',            cost: 25000,  costMultiplier: true, power: 0, powerMultiplier: false, mass: 1, massMultiplier: true, hullClass: 'Fighter' },
@@ -155,7 +165,7 @@ export function generateDefence(money, hullClass) {
     { value: 'Point Defense Lasers',         cost: 10000,  costMultiplier: true, power: 3, powerMultiplier: false, mass: 2, massMultiplier: true, hullClass: 'Frigate' },
   ]
   const fittingsForHullClass = filterByHullClass(options, hullClass)
-  return buyRandom(options, hullClass, money)
+  return buyRandom(options, hullClass, resources, defences)
 }
 
 function filterByHullClass(options, hullClass) {
@@ -173,4 +183,12 @@ function filterByHullClass(options, hullClass) {
       return options.hullClass === 'Fighter'
     }
   })
+}
+
+function calculateResources(resources, hullType, option) {
+  const money = resources.money - calculateCostForHullClass(option, hullType.hullClass)
+  const mass = resources.mass - calculateMassForHullClass(option, hullType.hullClass)
+  const power = resources.power - calculatePowerForHullClass(option, hullType.hullClass)
+  const hard = resources.hard - (option.hard || 0)
+  return { money, mass, power, hard }
 }

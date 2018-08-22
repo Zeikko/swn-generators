@@ -1,4 +1,6 @@
 import { sortBy, last, random } from 'lodash'
+import { calculateMassForHullClass } from './mass'
+import { calculatePowerForHullClass } from './power'
 
 export function buyMostExpensive(options, money) {
   const purchasableOptions = options.filter(option => option.cost <= money)
@@ -15,9 +17,14 @@ export function generateMoney(minMoney, maxMoney) {
   return Math.round(Math.pow(x, 3))
 }
 
-export function buyRandom(options, hullClass, money) {
-  const purchasableOptions = options.filter(option => calculateCostForHullClass(option, hullClass) <= money)
-  return purchasableOptions[random(0, purchasableOptions.length - 1)]
+export function buyRandom(options, hullClass, resources, existingOptions) {
+  const optionsFilteredByCost = options.filter(option => calculateCostForHullClass(option, hullClass) <= resources.money)
+  const optionsFilteredByMass = optionsFilteredByCost.filter(option => calculateMassForHullClass(option, hullClass) <= resources.mass)
+  const optionsFilteredByPower = optionsFilteredByMass.filter(option => calculatePowerForHullClass(option, hullClass) <= resources.power)
+  const optionsFilteredByHard = optionsFilteredByPower.filter(option => option.hard || 0 <= resources.hard)
+  const existingValues = existingOptions.map(option => option.value)
+  const optionsFilteredByExisting = optionsFilteredByHard.filter(option => !existingValues.includes(option.value))
+  return optionsFilteredByExisting[random(0, optionsFilteredByExisting.length - 1)]
 }
 
 export function calculateCostForHullClass(option, hullClass) {

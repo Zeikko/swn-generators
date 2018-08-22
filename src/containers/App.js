@@ -15,13 +15,14 @@ export default class App extends Component {
   }
 
   render() {
-    const { ship, ship: { purpose, hullType, complication, state, fittings, defences } } = this.state
+    const { ship, ship: { purpose, hullType, complication, state, fittings, defences, resources, startMoney } } = this.state
     return (
       <div>
         <h1>SWN Generators</h1>
         <div>This generator is work in progress</div>
         <div>The red items are placeholders and will not be randomized</div>
         <h2>Ship</h2>
+        <button onClick={this.generateShip}>Generate</button>
         <Row>
           <Label red>Name:</Label>
           <Attribute>Feri Voyager</Attribute>
@@ -51,18 +52,18 @@ export default class App extends Component {
           <Attribute>Plasma Beam (+4/3d6, AP 10)</Attribute>
         </Row>
         <Row>
-          <Label red>Defenses:</Label>
+          <Label>Defenses:</Label>
           <Attribute>
             <ul>
-              {defences.map(defence => <li>{defence.value}</li>)}
+              {defences.map(defence => <li key={defence.value}>{defence.value}</li>)}
             </ul>
           </Attribute>
         </Row>
         <Row>
-          <Label red>Fittings:</Label>
+          <Label>Fittings:</Label>
           <Attribute>
             <ul>
-              {fittings.map(fitting => <li>{fitting.value}</li>)}
+              {fittings.map(fitting => <li key={fitting.value}>{fitting.value}</li>)}
             </ul>
           </Attribute>
         </Row>
@@ -75,7 +76,22 @@ export default class App extends Component {
             </ul>
           </Attribute>
         </Row>
-        <button onClick={this.generateShip}>Generate</button>
+        <Row>
+          <Label>Cost:</Label>
+          <Attribute>{startMoney - resources.money}</Attribute>
+        </Row>
+        <Row>
+          <Label>Mass:</Label>
+          <Attribute>{hullType.mass - resources.mass} / {hullType.mass}</Attribute>
+        </Row>
+        <Row>
+          <Label>Power:</Label>
+          <Attribute>{hullType.power - resources.power} / {hullType.power}</Attribute>
+        </Row>
+        <Row>
+          <Label>Hard:</Label>
+          <Attribute>{hullType.hard - resources.hard} / {hullType.hard}</Attribute>
+        </Row>
       </div>
     )
   }
