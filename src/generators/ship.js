@@ -1,4 +1,4 @@
-import { pickRandom } from '../util/random'
+import { pickRandom, pickWeightedRandom } from '../util/random'
 
 export function generateShip() {
   return {
@@ -11,18 +11,18 @@ export function generateShip() {
 
 export function generatePurpose() {
   const options = [
-    'Bounty Hunter',
-    'Pirate',
-    'Smuggler',
-    'Merchant',
-    'Spy',
-    'Diplomat',
-    'Explorer',
-    'Military',
-    'Research',
-    'Maintenance',
+    { value: 'Bounty Hunter', weight: 2 },
+    { value: 'Pirate', weight: 2 },
+    { value: 'Smuggler', weight: 2 },
+    { value: 'Merchant', weight: 6 },
+    { value: 'Spy', weight: 1 },
+    { value: 'Diplomat', weight: 2 },
+    { value: 'Explorer', weight: 2 },
+    { value: 'Military', weight: 2 },
+    { value: 'Research', weight: 1 },
+    { value: 'Maintenance', weight: 2 },
   ]
-  return pickRandom(options)
+  return pickWeightedRandom(options)
 }
 
 export function generateHullType() {

@@ -36,7 +36,7 @@ export default class App extends Component {
         </Row>
         <Row>
          <Label>Purpose: </Label>
-          <Attribute>{purpose}</Attribute>
+          <Attribute>{purpose.value}</Attribute>
         </Row>
         <Row>
           <Label>State: </Label>
