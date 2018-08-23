@@ -151,7 +151,7 @@ export function generateFitting(resources, hullClass, fittings) {
     { value: 'Ship bay/frigate',           cost: 1000000, costMultiplier: false, power: 1, powerMultiplier: false, mass: 4,   massMultiplier: false, hullClass: 'Capital' },
     { value: 'Ship’s locker',              cost: 2000,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
     { value: 'Shiptender mount',           cost: 25000,   costMultiplier: true,  power: 1, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Smuggler’s hold',            cost: 2500,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Fighter' },
+    { value: 'Smuggler’s hold',            cost: 2500,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Fighter', multiple: true },
     { value: 'Survey sensor array',        cost: 5000,    costMultiplier: true,  power: 2, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
     { value: 'System drive',               cost: 0,       costMultiplier: false, power: 1, powerMultiplier: true,  mass: 2,   massMultiplier: true,  hullClass: 'Fighter' },
   //{ value: 'Teleportation pads',         cost: 10000,   costMultiplier: false, power: 0, powerMultiplier: false, mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
@@ -218,20 +218,24 @@ function calculateResources(resources, hullType, option) {
 
 function calculateCargoSpace(fittings, hullClass) {
   let cargoCount = 0
-  const fittingsWithoutCargo = fittings.filter(fitting => {
+  let smugglersCount = 0
+  let fittingsWithoutCargo = fittings.filter(fitting => {
     if (fitting.value === 'Cargo space') {
       cargoCount = cargoCount + 1
-      return false
     }
-    return true
+    if (fitting.value === 'Smuggler’s hold') {
+      smugglersCount = smugglersCount + 1
+    }
+    return fitting.value !== 'Cargo space' && fitting.value !== 'Smuggler’s hold' 
   })
   const cargoMultiplier = calculateCargoMultiplier(hullClass)
-  return [
-    ...fittingsWithoutCargo,
-    {
-      value: `${cargoCount * cargoMultiplier} tons of cargo space`
-    }
-  ] 
+  if (cargoCount) {
+    fittingsWithoutCargo = [ ...fittingsWithoutCargo, { value: `${cargoCount * cargoMultiplier} tons of cargo space` }]
+  }
+  if (smugglersCount) {
+    fittingsWithoutCargo = [ ...fittingsWithoutCargo, { value: `${smugglersCount * cargoMultiplier / 10} tons of smuggler's hold` }]
+  }
+  return fittingsWithoutCargo
 }
 
 function calculateCargoMultiplier(hullClass) {
