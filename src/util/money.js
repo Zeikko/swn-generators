@@ -22,7 +22,7 @@ export function buyRandom(options, hullClass, resources, existingOptions) {
   const optionsFilteredByCost = optionsForHullClass.filter(option => calculateCostForHullClass(option, hullClass) <= resources.money)
   const optionsFilteredByMass = optionsFilteredByCost.filter(option => calculateMassForHullClass(option, hullClass) <= resources.mass)
   const optionsFilteredByPower = optionsFilteredByMass.filter(option => calculatePowerForHullClass(option, hullClass) <= resources.power)
-  const optionsFilteredByHard = optionsFilteredByPower.filter(option => option.hard || 0 <= resources.hard)
+  const optionsFilteredByHard = optionsFilteredByPower.filter(option => (option.hard || 0) <= resources.hard)
   const existingValues = existingOptions.map(option => option.value)
   const optionsFilteredByExisting = optionsFilteredByHard.filter(option => !existingValues.includes(option.value) || option.multiple)
   return optionsFilteredByExisting[random(0, optionsFilteredByExisting.length - 1)]
