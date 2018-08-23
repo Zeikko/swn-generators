@@ -27,7 +27,7 @@ export function buyRandom(options, hullClass, resources, purpose, existingOption
   const existingValues = existingOptions.map(option => option.value)
   const optionsFilteredByExisting = optionsFilteredByHard.filter(option => !existingValues.includes(option.value) || option.multiple)
   const weightedOptions = optionsFilteredByExisting.map(option => {
-    const weight = (purpose.weights[option.group] || 1) * option.weight
+    const weight = (purpose.weights[option.group] || 1) * (option.weight || 1)
     return { ...option, weight }
   })
   return pickWeightedRandom(weightedOptions)
