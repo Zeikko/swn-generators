@@ -1,3 +1,4 @@
+import { random } from 'lodash'
 import { pickRandom, pickWeightedRandom } from '../util/random'
 import { buyMostExpensive, generateMoney, buyRandom, calculateCostForHullClass } from '../util/money'
 import { calculateMassForHullClass } from '../util/mass'
@@ -8,6 +9,7 @@ export function generateShip() {
   let fittings = []
   let defences = []
   const purpose = generatePurpose()
+  const { aggressiveness } = purpose
   let startMoney = generateMoney(purpose.minMoney, purpose.maxMoney)
   const hullType = generateHullType(startMoney)
   let { power, mass, hard } = hullType
@@ -15,12 +17,12 @@ export function generateShip() {
   resources.money = resources.money - hullType.cost
   let fitting = true
   while (fitting) {
-    const weapon = generateWeapon(resources, hullType.hullClass, weapons)
+    const weapon = generateWeapon(resources, hullType.hullClass, aggressiveness, weapons)
     if (weapon) {
       resources = calculateResources(resources, hullType, weapon)
       weapons = [ ...weapons, weapon]
     }
-    const defence = generateDefence(resources, hullType.hullClass, defences)
+    const defence = generateDefence(resources, hullType.hullClass, aggressiveness, defences)
     if (defence) {
       resources = calculateResources(resources, hullType, defence)
       defences = [ ...defences, defence]
@@ -47,16 +49,16 @@ export function generateShip() {
 
 export function generatePurpose() {
   const options = [
-    { value: 'Bounty Hunter', weight: 2, minMoney: 300000, maxMoney: 8000000 },
-    { value: 'Pirate', weight: 2, minMoney: 300000, maxMoney: 5000000 },
-    { value: 'Smuggler', weight: 2, minMoney: 300000, maxMoney: 6000000 },
-    { value: 'Merchant', weight: 6, minMoney: 300000, maxMoney: 8000000 },
-    { value: 'Spy', weight: 1, minMoney: 300000, maxMoney: 8000000 },
-    { value: 'Diplomat', weight: 2, minMoney: 300000, maxMoney: 5000000 },
-    { value: 'Explorer', weight: 2, minMoney: 300000, maxMoney: 5000000 },
-    { value: 'Military', weight: 2, minMoney: 300000, maxMoney: 70000000 },
-    { value: 'Research', weight: 1, minMoney: 300000, maxMoney: 5000000 },
-    { value: 'Maintenance', weight: 2, minMoney: 300000, maxMoney: 5000000 },
+    { value: 'Bounty Hunter', weight: 2, aggressiveness: 6, minMoney: 300000, maxMoney: 8000000 },
+    { value: 'Pirate',        weight: 2, aggressiveness: 8, minMoney: 300000, maxMoney: 5000000 },
+    { value: 'Smuggler',      weight: 2, aggressiveness: 6, minMoney: 300000, maxMoney: 6000000 },
+    { value: 'Merchant',      weight: 6, aggressiveness: 4, minMoney: 300000, maxMoney: 8000000 },
+    { value: 'Spy',           weight: 1, aggressiveness: 4, minMoney: 300000, maxMoney: 8000000 },
+    { value: 'Diplomat',      weight: 2, aggressiveness: 2, minMoney: 300000, maxMoney: 5000000 },
+    { value: 'Explorer',      weight: 2, aggressiveness: 2, minMoney: 300000, maxMoney: 5000000 },
+    { value: 'Military',      weight: 2, aggressiveness: 10, minMoney: 300000, maxMoney: 70000000 },
+    { value: 'Research',      weight: 1, aggressiveness: 2, minMoney: 300000, maxMoney: 5000000 },
+    { value: 'Maintenance',   weight: 2, aggressiveness: 2, minMoney: 300000, maxMoney: 5000000 },
   ]
   return pickWeightedRandom(options)
 }
@@ -160,7 +162,10 @@ export function generateFitting(resources, hullClass, fittings) {
   return buyRandom(options, hullClass, resources, fittings)
 }
 
-export function generateDefence(resources, hullClass, defences) {
+export function generateDefence(resources, hullClass, aggressiveness, defences) {
+  if (random(1, 10) > (aggressiveness / 4)) {
+    return
+  }
   const options = [
     { value: 'Ablative Hull Compartments',   cost: 100000, costMultiplier: true, power: 5, powerMultiplier: false, mass: 2, massMultiplier: true, hullClass: 'Capital' },
     { value: 'Augmented Plating',            cost: 25000,  costMultiplier: true, power: 0, powerMultiplier: false, mass: 1, massMultiplier: true, hullClass: 'Fighter' },
@@ -175,7 +180,10 @@ export function generateDefence(resources, hullClass, defences) {
   return buyRandom(options, hullClass, resources, defences)
 }
 
-export function generateWeapon(resources, hullClass, defences) {
+export function generateWeapon(resources, hullClass, aggressiveness, defences) {
+  if (random(1, 10) > aggressiveness) {
+    return
+  }
   const options = [
     { value: 'Multifocal Laser',           cost: 100000,   power: 5,  mass: 1,  hard: 1, hullClass: 'Fighter', damage: '1d4',     qualities: 'AP 20' },
     { value: 'Reaper Battery',             cost: 100000,   power: 4,  mass: 1,  hard: 1, hullClass: 'Fighter', damage: '3d4',     qualities: 'Clumsy' },
