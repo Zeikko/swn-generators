@@ -31,6 +31,7 @@ export function generateShip() {
       fittings = [ ...fittings, fitting]
     }
   }
+  fittings = calculateCargoSpace(fittings, hullType.hullClass)
   return {
     purpose,
     hullType,
@@ -119,7 +120,7 @@ export function generateFitting(resources, hullClass, fittings) {
     { value: 'Automation support',         cost: 10000,   costMultiplier: true,  power: 2, powerMultiplier: true , mass: 1,   massMultiplier: false, hullClass: 'Fighter' },
     { value: 'Boarding tubes',             cost: 5000,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
     { value: 'Cargo lighter',              cost: 25000,   costMultiplier: false, power: 0, powerMultiplier: false, mass: 2,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Cargo space',                cost: 0,       costMultiplier: false, power: 0, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Fighter' },
+    { value: 'Cargo space',                cost: 0,       costMultiplier: false, power: 0, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Fighter', multiple: true },
     { value: 'Cold sleep pods',            cost: 5000,    costMultiplier: true,  power: 1, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
     { value: 'Colony core',                cost: 100000,  costMultiplier: true,  power: 4, powerMultiplier: false, mass: 2,   massMultiplier: true,  hullClass: 'Frigate' },
     { value: 'Drill course regulator',     cost: 25000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
@@ -205,4 +206,35 @@ function calculateResources(resources, hullType, option) {
   const power = resources.power - calculatePowerForHullClass(option, hullType.hullClass)
   const hard = resources.hard - (option.hard || 0)
   return { money, mass, power, hard }
+}
+
+function calculateCargoSpace(fittings, hullClass) {
+  let cargoCount = 0
+  const fittingsWithoutCargo = fittings.filter(fitting => {
+    if (fitting.value === 'Cargo space') {
+      cargoCount = cargoCount + 1
+      return false
+    }
+    return true
+  })
+  const cargoMultiplier = calculateCargoMultiplier(hullClass)
+  return [
+    ...fittingsWithoutCargo,
+    {
+      value: `${cargoCount * cargoMultiplier} tons of Cargo Space`
+    }
+  ] 
+}
+
+function calculateCargoMultiplier(hullClass) {
+  switch (hullClass) {
+    case 'Fighter':
+      return 2
+    case 'Frigate':
+      return 20
+    case 'Cruiser':
+      return 200
+    case 'Capital':
+      return 2000
+  }
 }
