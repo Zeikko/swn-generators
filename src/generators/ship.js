@@ -1,4 +1,4 @@
-import { random } from 'lodash'
+import { random, groupBy, map } from 'lodash'
 import { pickRandom, pickWeightedRandom } from '../util/random'
 import { buyMostExpensive, generateMoney, buyRandom, calculateCostForHullClass } from '../util/money'
 import { calculateMassForHullClass } from '../util/mass'
@@ -17,29 +17,31 @@ export function generateShip() {
   resources.money = resources.money - hullType.cost
   let fitting = true
   while (fitting) {
-    const weapon = generateWeapon(resources, hullType.hullClass, aggressiveness, weapons)
+    const weapon = generateWeapon(resources, hullType.hullClass, purpose, weapons)
     if (weapon) {
       resources = calculateResources(resources, hullType, weapon)
       weapons = [ ...weapons, weapon]
     }
-    const defence = generateDefence(resources, hullType.hullClass, aggressiveness, defences)
+    const defence = generateDefence(resources, hullType.hullClass, purpose, defences)
     if (defence) {
       resources = calculateResources(resources, hullType, defence)
       defences = [ ...defences, defence]
     }
-    fitting = generateFitting(resources, hullType.hullClass, fittings)
+    fitting = generateFitting(resources, hullType.hullClass, purpose, fittings)
     if (fitting) {
       resources = calculateResources(resources, hullType, fitting)
       fittings = [ ...fittings, fitting]
     }
   }
-  fittings = calculateCargoSpace(fittings, hullType.hullClass)
+  const groupedFittings = groupBy(fittings, 'value')
+  const fittingsWithCounts = map(groupedFittings, group => ({ ...group[0], count: group.length }))
+  const fittingsWithCargoSpace = calculateCargoSpace(fittingsWithCounts, hullType.hullClass)
   return {
     purpose,
     hullType,
     complication: generateComplication(),
     state: generateState(),
-    fittings,
+    fittings: fittingsWithCargoSpace,
     weapons,
     defences,
     resources,
@@ -49,16 +51,17 @@ export function generateShip() {
 
 export function generatePurpose() {
   const options = [
-    { value: 'Bounty Hunter', weight: 2, aggressiveness: 6, minMoney: 300000, maxMoney: 8000000 },
-    { value: 'Pirate',        weight: 2, aggressiveness: 8, minMoney: 300000, maxMoney: 5000000 },
-    { value: 'Smuggler',      weight: 2, aggressiveness: 6, minMoney: 300000, maxMoney: 6000000 },
-    { value: 'Merchant',      weight: 6, aggressiveness: 4, minMoney: 300000, maxMoney: 8000000 },
-    { value: 'Spy',           weight: 1, aggressiveness: 4, minMoney: 300000, maxMoney: 8000000 },
-    { value: 'Diplomat',      weight: 2, aggressiveness: 2, minMoney: 300000, maxMoney: 5000000 },
-    { value: 'Explorer',      weight: 2, aggressiveness: 2, minMoney: 300000, maxMoney: 5000000 },
-    { value: 'Military',      weight: 2, aggressiveness: 10, minMoney: 300000, maxMoney: 70000000 },
-    { value: 'Research',      weight: 1, aggressiveness: 2, minMoney: 300000, maxMoney: 5000000 },
-    { value: 'Maintenance',   weight: 2, aggressiveness: 2, minMoney: 300000, maxMoney: 5000000 },
+    { value: 'Bounty Hunter', weight: 2, aggressiveness: 6,  minMoney: 300000, maxMoney: 8000000, weights: { aggression: 4, travel: 4, drive: 4 }},
+    { value: 'Pirate',        weight: 2, aggressiveness: 8,  minMoney: 300000, maxMoney: 5000000, weights: { aggression: 8, stealth: 4, trade: 4 } },
+    { value: 'Smuggler',      weight: 2, aggressiveness: 6,  minMoney: 800000, maxMoney: 6000000, weights: { aggression: 4, stealth: 8, survival: 4, trade: 8 } },
+    { value: 'Merchant',      weight: 6, aggressiveness: 4,  minMoney: 300000, maxMoney: 8000000, weights: { drive: 4, travel: 4, trade: 8 } },
+    { value: 'Spy',           weight: 1, aggressiveness: 4,  minMoney: 300000, maxMoney: 8000000, weights: { stealth: 8, drive: 4 } },
+    { value: 'Diplomat',      weight: 2, aggressiveness: 2,  minMoney: 300000, maxMoney: 5000000, weights: { drive: 8, travel: 8, luxury: 8, survival: 4 } },
+    { value: 'Explorer',      weight: 2, aggressiveness: 2,  minMoney: 300000, maxMoney: 5000000, weights: { drive: 8, travel: 4, exploration: 8, survival: 4 } },
+    { value: 'Military',      weight: 2, aggressiveness: 10, minMoney: 300000, maxMoney: 70000000, weights: { aggression: 8 } },
+    { value: 'Research',      weight: 1, aggressiveness: 2,  minMoney: 300000, maxMoney: 5000000, weights: { research: 8, luxury: 4, colonial: 4 } },
+    { value: 'Maintenance',   weight: 2, aggressiveness: 2,  minMoney: 300000, maxMoney: 5000000, weights: { industry: 8, survival: 4 } },
+    { value: 'Colonist',      weight: 1, aggressiveness: 2,  minMoney: 3000000, maxMoney: 7000000, weights: { industry: 4, travel: 4, drive: 4, exploration: 4, survival: 4, colonial: 3 } },
   ]
   return pickWeightedRandom(options)
 }
@@ -111,59 +114,61 @@ export function generateState() {
   return pickRandom(options)
 }
 
-export function generateFitting(resources, hullClass, fittings) {
+export function generateFitting(resources, hullClass, purpose, fittings) {
   const options = [
-    { value: 'Advanced lab',               cost: 10000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 2,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Advanced nav computer',      cost: 10000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Amphibious operation',       cost: 25000,   costMultiplier: true,  power: 1, powerMultiplier: false, mass: 1,   massMultiplier: true,  hullClass: 'Frigate' },
-    { value: 'Armory',                     cost: 10000,   costMultiplier: true,  power: 0, powerMultiplier: false, mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Atmospheric configuration',  cost: 5000,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: true,  hullClass: 'Fighter' },
-    { value: 'Auto-targeting system',      cost: 50000,   costMultiplier: false, power: 1, powerMultiplier: false, mass: 0,   massMultiplier: false, hullClass: 'Fighter' },
-    { value: 'Automation support',         cost: 10000,   costMultiplier: true,  power: 2, powerMultiplier: true , mass: 1,   massMultiplier: false, hullClass: 'Fighter' },
-    { value: 'Boarding tubes',             cost: 5000,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Cargo lighter',              cost: 25000,   costMultiplier: false, power: 0, powerMultiplier: false, mass: 2,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Cargo space',                cost: 0,       costMultiplier: false, power: 0, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Fighter', multiple: true },
-    { value: 'Cold sleep pods',            cost: 5000,    costMultiplier: true,  power: 1, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Colony core',                cost: 100000,  costMultiplier: true,  power: 4, powerMultiplier: false, mass: 2,   massMultiplier: true,  hullClass: 'Frigate' },
-    { value: 'Drill course regulator',     cost: 25000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Drive-2 upgrade',            cost: 10000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 0,   massMultiplier: true,  hullClass: 'Frigate' },
-    { value: 'Drive-3 upgrade',            cost: 20000,   costMultiplier: true,  power: 2, powerMultiplier: true,  mass: 0,   massMultiplier: true,  hullClass: 'Frigate' },
-    { value: 'Drive-4 upgrade',            cost: 40000,   costMultiplier: true,  power: 2, powerMultiplier: true,  mass: 0,   massMultiplier: true,  hullClass: 'Frigate' },
-    { value: 'Drive-5 upgrade',            cost: 100000,  costMultiplier: true,  power: 3, powerMultiplier: true,  mass: 0,   massMultiplier: true,  hullClass: 'Frigate' },
-    { value: 'Drive-6 upgrade',            cost: 500000,  costMultiplier: true,  power: 3, powerMultiplier: true,  mass: 0,   massMultiplier: true,  hullClass: 'Cruiser' },
-    { value: 'Drop pod',                   cost: 300000,  costMultiplier: false, power: 0, powerMultiplier: false, mass: 2,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Emissions dampers',          cost: 25000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 1,   massMultiplier: true,  hullClass: 'Cruiser' },
-    { value: 'Exodus bay',                 cost: 50000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 2,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Extended life support',      cost: 5000,    costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 1,   massMultiplier: true,  hullClass: 'Fighter' },
-    { value: 'Extended medbay',            cost: 5000,    costMultiplier: true,  power: 1, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Extended stores',            cost: 2500,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: true,  hullClass: 'Fighter' },
-    { value: 'Fuel bunkers',               cost: 2500,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Fighter' },
-    { value: 'Fuel scoops',                cost: 5000,    costMultiplier: true,  power: 2, powerMultiplier: false, mass: 1,   massMultiplier: true,  hullClass: 'Frigate' },
-    { value: 'Hydroponic production',      cost: 10000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 2,   massMultiplier: true,  hullClass: 'Cruiser' },
-    { value: 'Lifeboats',                  cost: 2500,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Luxury cabins',              cost: 10000,   costMultiplier: true,  power: 1, powerMultiplier: false, mass: 1,   massMultiplier: true,  hullClass: 'Frigate' },
-    { value: 'Mobile extractor',           cost: 50000,   costMultiplier: false, power: 2, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Mobile factory',             cost: 50000,   costMultiplier: true,  power: 3, powerMultiplier: false, mass: 2,   massMultiplier: true,  hullClass: 'Frigate' },
-    { value: 'Precognitive nav chamber',   cost: 100000,  costMultiplier: true,  power: 1, powerMultiplier: false, mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
-  //{ value: 'Psionic anchorpoint',        cost: 10000,   costMultiplier: false, power: 0, powerMultiplier: false, mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Sensor mask',                cost: 10000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Ship bay/fighter',           cost: 200000,  costMultiplier: false, power: 0, powerMultiplier: false, mass: 2,   massMultiplier: false, hullClass: 'Cruiser' },
-    { value: 'Ship bay/frigate',           cost: 1000000, costMultiplier: false, power: 1, powerMultiplier: false, mass: 4,   massMultiplier: false, hullClass: 'Capital' },
-    { value: 'Ship’s locker',              cost: 2000,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Shiptender mount',           cost: 25000,   costMultiplier: true,  power: 1, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Smuggler’s hold',            cost: 2500,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Fighter', multiple: true },
-    { value: 'Survey sensor array',        cost: 5000,    costMultiplier: true,  power: 2, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'System drive',               cost: 0,       costMultiplier: false, power: 1, powerMultiplier: true,  mass: 2,   massMultiplier: true,  hullClass: 'Fighter' },
-  //{ value: 'Teleportation pads',         cost: 10000,   costMultiplier: false, power: 0, powerMultiplier: false, mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Tractor beams',              cost: 10000,   costMultiplier: true,  power: 2, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'Vehicle transport fittings', cost: 10000,   costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: true,  hullClass: 'Frigate' },
-    { value: 'Workshop',                   cost: 500,     costMultiplier: true,  power: 1, powerMultiplier: false, mass: 0.5, massMultiplier: true,  hullClass: 'Frigate' },
+    { value: 'Advanced lab',               weight: 10,  group: 'research',    cost: 10000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 2,   massMultiplier: false, hullClass: 'Frigate' },
+    { value: 'Advanced nav computer',      weight: 10,  group: 'travel',      cost: 10000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
+    { value: 'Amphibious operation',       weight: 10,  group: 'stealth',     cost: 25000,   costMultiplier: true,  power: 1, powerMultiplier: false, mass: 1,   massMultiplier: true,  hullClass: 'Frigate', maxHullClass: 'Frigate' },
+    { value: 'Armory',                     weight: 10,  group: 'aggression',  cost: 10000,   costMultiplier: true,  power: 0, powerMultiplier: false, mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
+    { value: 'Atmospheric configuration',  weight: 50,  group: 'general',     cost: 5000,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: true,  hullClass: 'Fighter', maxHullClass: 'Frigate' },
+    { value: 'Auto-targeting system',      weight: 10,  group: 'aggression',  cost: 50000,   costMultiplier: false, power: 1, powerMultiplier: false, mass: 0,   massMultiplier: false, hullClass: 'Fighter' },
+    { value: 'Automation support',         weight: 10,  group: 'general',     cost: 10000,   costMultiplier: true,  power: 2, powerMultiplier: true , mass: 1,   massMultiplier: false, hullClass: 'Fighter' },
+    { value: 'Boarding tubes',             weight: 10,  group: 'aggression',  cost: 5000,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
+    { value: 'Cargo lighter',              weight: 10,  group: 'trade',       cost: 25000,   costMultiplier: false, power: 0, powerMultiplier: false, mass: 2,   massMultiplier: false, hullClass: 'Frigate' },
+    { value: 'Cargo space',                weight: 10,  group: 'trade',       cost: 0,       costMultiplier: false, power: 0, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Fighter', multiple: true },
+    { value: 'Cold sleep pods',            weight: 10,  group: 'general',     cost: 5000,    costMultiplier: true,  power: 1, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate', multiple: true  },
+    { value: 'Colony core',                weight: 10,  group: 'colonial',    cost: 100000,  costMultiplier: true,  power: 4, powerMultiplier: false, mass: 2,   massMultiplier: true,  hullClass: 'Frigate' },
+    { value: 'Drill course regulator',     weight: 4,   group: 'travel',      cost: 25000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
+    { value: 'Drive-2 upgrade',            weight: 10,  group: 'drive',       cost: 10000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 0,   massMultiplier: true,  hullClass: 'Frigate' },
+    { value: 'Drive-3 upgrade',            weight: 8,   group: 'drive',       cost: 20000,   costMultiplier: true,  power: 2, powerMultiplier: true,  mass: 0,   massMultiplier: true,  hullClass: 'Frigate' },
+    { value: 'Drive-4 upgrade',            weight: 3,   group: 'drive',       cost: 40000,   costMultiplier: true,  power: 2, powerMultiplier: true,  mass: 0,   massMultiplier: true,  hullClass: 'Frigate' },
+    { value: 'Drive-5 upgrade',            weight: 2,   group: 'drive',       cost: 100000,  costMultiplier: true,  power: 3, powerMultiplier: true,  mass: 0,   massMultiplier: true,  hullClass: 'Frigate' },
+    { value: 'Drive-6 upgrade',            weight: 1,   group: 'drive',       cost: 500000,  costMultiplier: true,  power: 3, powerMultiplier: true,  mass: 0,   massMultiplier: true,  hullClass: 'Cruiser' },
+    { value: 'Drop pod',                   weight: 10,  group: 'aggression',  cost: 300000,  costMultiplier: false, power: 0, powerMultiplier: false, mass: 2,   massMultiplier: false, hullClass: 'Frigate', multiple: true },
+    { value: 'Emissions dampers',          weight: 10,  group: 'stealth',     cost: 25000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 1,   massMultiplier: true,  hullClass: 'Cruiser' },
+    { value: 'Exodus bay',                 weight: 10,  group: 'colonial',    cost: 50000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 2,   massMultiplier: false, hullClass: 'Frigate', multiple: true },
+    { value: 'Extended life support',      weight: 6,   group: 'survival',    cost: 5000,    costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 1,   massMultiplier: true,  hullClass: 'Fighter', multiple: true },
+    { value: 'Extended medbay',            weight: 10,  group: 'survival',    cost: 5000,    costMultiplier: true,  power: 1, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
+    { value: 'Extended stores',            weight: 6,   group: 'survival',    cost: 2500,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: true,  hullClass: 'Fighter', multiple: true  },
+    { value: 'Fuel bunkers',               weight: 6,   group: 'travel',      cost: 2500,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Fighter', multiple: true  },
+    { value: 'Fuel scoops',                weight: 10,  group: 'survival',    cost: 5000,    costMultiplier: true,  power: 2, powerMultiplier: false, mass: 1,   massMultiplier: true,  hullClass: 'Frigate' },
+    { value: 'Hydroponic production',      weight: 10,  group: 'industry',    cost: 10000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 2,   massMultiplier: true,  hullClass: 'Cruiser', multiple: true },
+    { value: 'Lifeboats',                  weight: 10,  group: 'survival',    cost: 2500,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
+    { value: 'Luxury cabins',              weight: 10,  group: 'luxury',      cost: 10000,   costMultiplier: true,  power: 1, powerMultiplier: false, mass: 1,   massMultiplier: true,  hullClass: 'Frigate', multiple: true },
+    { value: 'Mobile extractor',           weight: 10,  group: 'industry',    cost: 50000,   costMultiplier: false, power: 2, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
+    { value: 'Mobile factory',             weight: 10,  group: 'industry',    cost: 50000,   costMultiplier: true,  power: 3, powerMultiplier: false, mass: 2,   massMultiplier: true,  hullClass: 'Frigate' },
+    { value: 'Precognitive nav chamber',   weight: 10,  group: 'travel',      cost: 100000,  costMultiplier: true,  power: 1, powerMultiplier: false, mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
+  //{ value: 'Psionic anchorpoint',        weight: 10,  group: '',            cost: 10000,   costMultiplier: false, power: 0, powerMultiplier: false, mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
+    { value: 'Sensor mask',                weight: 10,  group: 'stealth',     cost: 10000,   costMultiplier: true,  power: 1, powerMultiplier: true,  mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
+    { value: 'Ship bay/fighter',           weight: 10,  group: 'aggression',  cost: 200000,  costMultiplier: false, power: 0, powerMultiplier: false, mass: 2,   massMultiplier: false, hullClass: 'Cruiser', multiple: true },
+    { value: 'Ship bay/frigate',           weight: 10,  group: 'aggression',  cost: 1000000, costMultiplier: false, power: 1, powerMultiplier: false, mass: 4,   massMultiplier: false, hullClass: 'Capital', multiple: true },
+    { value: 'Ship’s locker',              weight: 10,  group: 'general',     cost: 2000,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
+    { value: 'Shiptender mount',           weight: 10,  group: 'industry',    cost: 25000,   costMultiplier: true,  power: 1, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
+    { value: 'Smuggler’s hold',            weight: 10,  group: 'stealth',     cost: 2500,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Fighter', multiple: true },
+    { value: 'Survey sensor array',        weight: 10,  group: 'exploration', cost: 5000,    costMultiplier: true,  power: 2, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
+    { value: 'System drive',               weight: 10,  group: 'bad-drive',   cost: 0,       costMultiplier: false, power: 1, powerMultiplier: true,  mass: 2,   massMultiplier: true,  hullClass: 'Fighter' },
+  //{ value: 'Teleportation pads',         weight: 10,  group: '',            cost: 10000,   costMultiplier: false, power: 0, powerMultiplier: false, mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
+    { value: 'Tractor beams',              weight: 10,  group: 'general',     cost: 10000,   costMultiplier: true,  power: 2, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
+    { value: 'Vehicle transport fittings', weight: 10,  group: 'aggression',  cost: 10000,   costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: true,  hullClass: 'Frigate' },
+    { value: 'Workshop',                   weight: 10,  group: 'industry',    cost: 500,     costMultiplier: true,  power: 1, powerMultiplier: false, mass: 0.5, massMultiplier: true,  hullClass: 'Frigate' },
   ]
-  return buyRandom(options, hullClass, resources, fittings)
+  const existingGroups = fittings.map(option => option.group)
+  const optionsWithoutDuplicateDrive = options.filter(option => !existingGroups.includes('drive') || !existingGroups.includes('bad-drive') || option.group !== 'drive')
+  return buyRandom(optionsWithoutDuplicateDrive, hullClass, resources, purpose, fittings)
 }
 
-export function generateDefence(resources, hullClass, aggressiveness, defences) {
-  if (random(1, 10) > (aggressiveness / 4)) {
+export function generateDefence(resources, hullClass, purpose, defences) {
+  if (random(1, 10) > (purpose.aggressiveness / 4)) {
     return
   }
   const options = [
@@ -177,11 +182,11 @@ export function generateDefence(resources, hullClass, aggressiveness, defences) 
     { value: 'Planetary Defense Array',      cost: 50000,  costMultiplier: true, power: 4, powerMultiplier: false, mass: 2, massMultiplier: true, hullClass: 'Frigate' },
     { value: 'Point Defense Lasers',         cost: 10000,  costMultiplier: true, power: 3, powerMultiplier: false, mass: 2, massMultiplier: true, hullClass: 'Frigate' },
   ]
-  return buyRandom(options, hullClass, resources, defences)
+  return buyRandom(options, hullClass, resources, purpose, defences)
 }
 
-export function generateWeapon(resources, hullClass, aggressiveness, defences) {
-  if (random(1, 10) > aggressiveness) {
+export function generateWeapon(resources, hullClass, purpose, weapons) {
+  if (random(1, 10) > purpose.aggressiveness) {
     return
   }
   const options = [
@@ -205,7 +210,7 @@ export function generateWeapon(resources, hullClass, aggressiveness, defences) {
     { value: 'Lightning Charge Mantle',    cost: 4000000,  power: 15, mass: 5,  hard: 2, hullClass: 'Capital', damage: '1d20',    qualities: 'AP 5, Cloud' },
     { value: 'Singularity Gun',            cost: 20000000, power: 25, mass: 10, hard: 5, hullClass: 'Capital', damage: '5d20',    qualities: 'AP 25' },
   ]
-  return buyRandom(options, hullClass, resources, defences)
+  return buyRandom(options, hullClass, resources, purpose, weapons)
 }
 
 function calculateResources(resources, hullType, option) {

@@ -429,8 +429,8 @@ autoprefixer@^6.3.1:
     postcss-value-parser "^3.2.3"
 
 aws-sdk@^2.228.0:
-  version "2.297.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.297.0.tgz#2fe085076f6fd488285ef7cfaf883fdaa47acee9"
+  version "2.299.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.299.0.tgz#9c12f924f1e28d22899816e112dcb722c4bccf30"
   dependencies:
     buffer "4.9.1"
     events "1.1.1"
@@ -1160,11 +1160,11 @@ browserslist@^3.2.6:
     electron-to-chromium "^1.3.47"
 
 browserslist@^4.0.0:
-  version "4.0.2"
-  resolved "https://registry.yarnpkg.com/browserslist/-/browserslist-4.0.2.tgz#294388f5844bb3ab15ef7394ca17f49bf7a4e6f1"
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/browserslist/-/browserslist-4.1.0.tgz#81cbb8e52dfa09918f93c6e051d779cb7360785d"
   dependencies:
-    caniuse-lite "^1.0.30000876"
-    electron-to-chromium "^1.3.57"
+    caniuse-lite "^1.0.30000878"
+    electron-to-chromium "^1.3.61"
     node-releases "^1.0.0-alpha.11"
 
 buffer-alloc-unsafe@^1.1.0:
@@ -1273,7 +1273,7 @@ caniuse-db@^1.0.30000529, caniuse-db@^1.0.30000634, caniuse-db@^1.0.30000639:
   version "1.0.30000878"
   resolved "https://registry.yarnpkg.com/caniuse-db/-/caniuse-db-1.0.30000878.tgz#0d0c6d8500c3aea21441fad059bce4b8f3f509df"
 
-caniuse-lite@^1.0.0, caniuse-lite@^1.0.30000844, caniuse-lite@^1.0.30000876:
+caniuse-lite@^1.0.0, caniuse-lite@^1.0.30000844, caniuse-lite@^1.0.30000878:
   version "1.0.30000878"
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30000878.tgz#c644c39588dd42d3498e952234c372e5a40a4123"
 
@@ -2142,9 +2142,9 @@ ee-first@1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/ee-first/-/ee-first-1.1.1.tgz#590c61156b0ae2f4f0255732a158b266bc56b21d"
 
-electron-to-chromium@^1.2.7, electron-to-chromium@^1.3.47, electron-to-chromium@^1.3.57:
-  version "1.3.59"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.59.tgz#6377db04d8d3991d6286c72ed5c3fde6f4aaf112"
+electron-to-chromium@^1.2.7, electron-to-chromium@^1.3.47, electron-to-chromium@^1.3.61:
+  version "1.3.61"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.61.tgz#a8ac295b28d0f03d85e37326fd16b6b6b17a1795"
 
 elliptic@^6.0.0:
   version "6.4.1"
@@ -2560,8 +2560,8 @@ fsevents@^1.2.2:
     node-pre-gyp "^0.10.0"
 
 fswatcher-child@^1.0.3:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/fswatcher-child/-/fswatcher-child-1.0.5.tgz#134d012ffa74918975617e00e56e4139f36cb140"
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/fswatcher-child/-/fswatcher-child-1.1.0.tgz#af1650590f897532431731247fd6270f333912ff"
   dependencies:
     chokidar "^2.0.3"
 
@@ -2865,9 +2865,15 @@ iconv-lite@0.4.19:
   version "0.4.19"
   resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.4.19.tgz#f7468f60135f5e5dad3399c0a81be9a1603a082b"
 
-iconv-lite@0.4.23, iconv-lite@^0.4.4, iconv-lite@~0.4.13:
+iconv-lite@0.4.23:
   version "0.4.23"
   resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.4.23.tgz#297871f63be507adcfbfca715d0cd0eed84e9a63"
+  dependencies:
+    safer-buffer ">= 2.1.2 < 3"
+
+iconv-lite@^0.4.4, iconv-lite@~0.4.13:
+  version "0.4.24"
+  resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.4.24.tgz#2022b4b25fbddc21d2f524974a474aafe733908b"
   dependencies:
     safer-buffer ">= 2.1.2 < 3"
 
@@ -5171,8 +5177,8 @@ serve-static@1.13.2, serve-static@^1.12.4:
     send "0.16.2"
 
 serverless-finch@^2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/serverless-finch/-/serverless-finch-2.2.0.tgz#7ec84904b39a05dd9f61b1256b53d18883f40ef2"
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/serverless-finch/-/serverless-finch-2.3.2.tgz#1d9209ef21451baefb4cd5c4b21f24fc9e41e833"
   dependencies:
     async "^1.5.2"
     bluebird "^3.0.6"
@@ -5538,8 +5544,8 @@ strip-outer@^1.0.0:
     escape-string-regexp "^1.0.2"
 
 styled-components@^3.4.3:
-  version "3.4.3"
-  resolved "https://registry.yarnpkg.com/styled-components/-/styled-components-3.4.3.tgz#d7f91db0f124bbc337afb3b98ab37dee0455a301"
+  version "3.4.5"
+  resolved "https://registry.yarnpkg.com/styled-components/-/styled-components-3.4.5.tgz#6cbfde7c9189c868b9fd01fee40f5330dbd0cc8d"
   dependencies:
     buffer "^5.0.3"
     css-to-react-native "^2.0.3"
