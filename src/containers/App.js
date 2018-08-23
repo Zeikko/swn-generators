@@ -15,7 +15,7 @@ export default class App extends Component {
   }
 
   render() {
-    const { ship, ship: { purpose, hullType, complication, state, fittings, defences, resources, startMoney } } = this.state
+    const { ship, ship: { purpose, hullType, complication, state, weapons, fittings, defences, resources, startMoney } } = this.state
     return (
       <div>
         <h1>SWN Generators</h1>
@@ -48,8 +48,12 @@ export default class App extends Component {
           <Attribute>{complication}</Attribute>
         </Row>
         <Row>
-          <Label red>Weapons:</Label>
-          <Attribute>Plasma Beam (+4/3d6, AP 10)</Attribute>
+          <Label>Weapons:</Label>
+          <Attribute>
+            <ul>
+              {weapons.map(weapon => <li key={weapon.value}>{weapon.value} ({weapon.damage}, {weapon.qualities})</li>)}
+            </ul>
+          </Attribute>
         </Row>
         <Row>
           <Label>Defenses:</Label>

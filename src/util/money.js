@@ -18,7 +18,8 @@ export function generateMoney(minMoney, maxMoney) {
 }
 
 export function buyRandom(options, hullClass, resources, existingOptions) {
-  const optionsFilteredByCost = options.filter(option => calculateCostForHullClass(option, hullClass) <= resources.money)
+  const optionsForHullClass = filterByHullClass(options, hullClass)
+  const optionsFilteredByCost = optionsForHullClass.filter(option => calculateCostForHullClass(option, hullClass) <= resources.money)
   const optionsFilteredByMass = optionsFilteredByCost.filter(option => calculateMassForHullClass(option, hullClass) <= resources.mass)
   const optionsFilteredByPower = optionsFilteredByMass.filter(option => calculatePowerForHullClass(option, hullClass) <= resources.power)
   const optionsFilteredByHard = optionsFilteredByPower.filter(option => option.hard || 0 <= resources.hard)
@@ -42,4 +43,21 @@ export function calculateCostForHullClass(option, hullClass) {
   } else {
     return option.cost
   }
+}
+
+function filterByHullClass(options, hullClass) {
+  return options.filter((option) => {
+    if (hullClass === 'Capital') {
+      return true
+    }
+    if (hullClass === 'Cruiser') {
+      return option.hullClass !== 'Capital'
+    }
+    if (hullClass === 'Frigate') {
+      return option.hullClass === 'Fighter' || option.hullClass === 'Frigate'
+    }
+    if (hullClass === 'Fighter') {
+      return option.hullClass === 'Fighter'
+    }
+  })
 }

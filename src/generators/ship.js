@@ -4,20 +4,27 @@ import { calculateMassForHullClass } from '../util/mass'
 import { calculatePowerForHullClass } from '../util/power'
 
 export function generateShip() {
+  let weapons = []
   let fittings = []
   let defences = []
-  let weapons = []
   const purpose = generatePurpose()
   let startMoney = generateMoney(purpose.minMoney, purpose.maxMoney)
   const hullType = generateHullType(startMoney)
   let { power, mass, hard } = hullType
   let resources = { money: startMoney, power, mass, hard }
   resources.money = resources.money - hullType.cost
-  const defence = generateDefence(resources, hullType.hullClass, defences)
-  calculateResources(resources, hullType, defence)
-  defences = [ ...defences, defence]
   let fitting = true
   while (fitting) {
+    const weapon = generateWeapon(resources, hullType.hullClass, weapons)
+    if (weapon) {
+      calculateResources(resources, hullType, weapon)
+      weapons = [ ...weapons, weapon]
+    }
+    const defence = generateDefence(resources, hullType.hullClass, defences)
+    if (defence) {
+      calculateResources(resources, hullType, defence)
+      defences = [ ...defences, defence]
+    }
     fitting = generateFitting(resources, hullType.hullClass, fittings)
     if (fitting) {
       resources = calculateResources(resources, hullType, fitting)
@@ -30,6 +37,7 @@ export function generateShip() {
     complication: generateComplication(),
     state: generateState(),
     fittings,
+    weapons,
     defences,
     resources,
     startMoney,
@@ -148,7 +156,6 @@ export function generateFitting(resources, hullClass, fittings) {
     { value: 'Vehicle transport fittings', cost: 10000,   costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: true,  hullClass: 'Frigate' },
     { value: 'Workshop',                   cost: 500,     costMultiplier: true,  power: 1, powerMultiplier: false, mass: 0.5, massMultiplier: true,  hullClass: 'Frigate' },
   ]
-  const fittingsForHullClass = filterByHullClass(options, hullClass)
   return buyRandom(options, hullClass, resources, fittings)
 }
 
@@ -164,25 +171,32 @@ export function generateDefence(resources, hullClass, defences) {
     { value: 'Planetary Defense Array',      cost: 50000,  costMultiplier: true, power: 4, powerMultiplier: false, mass: 2, massMultiplier: true, hullClass: 'Frigate' },
     { value: 'Point Defense Lasers',         cost: 10000,  costMultiplier: true, power: 3, powerMultiplier: false, mass: 2, massMultiplier: true, hullClass: 'Frigate' },
   ]
-  const fittingsForHullClass = filterByHullClass(options, hullClass)
   return buyRandom(options, hullClass, resources, defences)
 }
 
-function filterByHullClass(options, hullClass) {
-  return options.filter(({ hullClass }) => {
-    if (hullClass === 'Capital') {
-      return true
-    }
-    if (hullClass === 'Cruiser') {
-      return options.hullClass !== 'Capital'
-    }
-    if (hullClass === 'Frigate') {
-      return options.hullClass === 'Fighter' || options.hullClass === 'Frigate'
-    }
-    if (hullClass === 'Fighter') {
-      return options.hullClass === 'Fighter'
-    }
-  })
+export function generateWeapon(resources, hullClass, defences) {
+  const options = [
+    { value: 'Multifocal Laser',           cost: 100000,   power: 5,  mass: 1,  hard: 1, hullClass: 'Fighter', damage: '1d4',     qualities: 'AP 20' },
+    { value: 'Reaper Battery',             cost: 100000,   power: 4,  mass: 1,  hard: 1, hullClass: 'Fighter', damage: '3d4',     qualities: 'Clumsy' },
+    { value: 'Fractal Impact Charge',      cost: 200000,   power: 5,  mass: 1,  hard: 1, hullClass: 'Fighter', damage: '2d6',     qualities: 'AP 15, Ammo 4' },
+    { value: 'Polyspectral MES Beam',      cost: 2000000,  power: 5,  mass: 1,  hard: 1, hullClass: 'Fighter', damage: '2d4',     qualities: 'AP 25' },
+    { value: 'Sandthrower',                cost: 50000,    power: 3,  mass: 1,  hard: 1, hullClass: 'Fighter', damage: '2d4',     qualities: 'Flak' },
+    { value: 'Flak Emitter Battery',       cost: 500000,   power: 5,  mass: 3,  hard: 1, hullClass: 'Frigate', damage: '2d6',     qualities: 'AP 10, Flak' },
+    { value: 'Torpedo Launcher',           cost: 500000,   power: 10, mass: 3,  hard: 1, hullClass: 'Frigate', damage: '3d8',     qualities: 'AP 20, Ammo 4' },
+    { value: 'Charged Particle Caster',    cost: 800000,   power: 10, mass: 1,  hard: 2, hullClass: 'Frigate', damage: '3d6',     qualities: 'AP 15, Clumsy' },
+    { value: 'Plasma Beam',                cost: 700000,   power: 5,  mass: 2,  hard: 2, hullClass: 'Frigate', damage: '3d6',     qualities: 'AP 10' },
+    { value: 'Mag Spike Array',            cost: 1000000,  power: 5,  mass: 2,  hard: 2, hullClass: 'Frigate', damage: '2d6+2',   qualities: 'Flak, AP 10, Ammo 5' },
+    { value: 'Nuclear Missiles',           cost: 50000,    power: 5,  mass: 1,  hard: 2, hullClass: 'Frigate', damage: 'Special', qualities: 'Ammo 5' },
+    { value: 'Spinal Beam Cannon',         cost: 1500000,  power: 10, mass: 5,  hard: 3, hullClass: 'Cruiser', damage: '3d10',    qualities: 'AP 15, Clumsy' },
+    { value: 'Smart Cloud ',               cost: 2000000,  power: 10, mass: 5,  hard: 2, hullClass: 'Cruiser', damage: '3d10',    qualities: 'Cloud, Clumsy' },
+    { value: 'Gravcannon',                 cost: 2000000,  power: 15, mass: 4,  hard: 3, hullClass: 'Cruiser', damage: '4d6',     qualities: 'AP 20' },
+    { value: 'Spike Inversion Projector',  cost: 2500000,  power: 10, mass: 3,  hard: 3, hullClass: 'Cruiser', damage: '3d8',     qualities: 'AP 15' },
+    { value: 'Vortex Tunnel Inductor',     cost: 5000000,  power: 20, mass: 10, hard: 4, hullClass: 'Capital', damage: '3d20',    qualities: 'AP 20, Clumsy' },
+    { value: 'Mass Cannon',                cost: 5000000,  power: 10, mass: 5,  hard: 4, hullClass: 'Capital', damage: '2d20',    qualities: 'AP 20, Ammo 4' },
+    { value: 'Lightning Charge Mantle',    cost: 4000000,  power: 15, mass: 5,  hard: 2, hullClass: 'Capital', damage: '1d20',    qualities: 'AP 5, Cloud' },
+    { value: 'Singularity Gun',            cost: 20000000, power: 25, mass: 10, hard: 5, hullClass: 'Capital', damage: '5d20',    qualities: 'AP 25' },
+  ]
+  return buyRandom(options, hullClass, resources, defences)
 }
 
 function calculateResources(resources, hullType, option) {
