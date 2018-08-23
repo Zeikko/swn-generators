@@ -17,12 +17,12 @@ export function generateShip() {
   while (fitting) {
     const weapon = generateWeapon(resources, hullType.hullClass, weapons)
     if (weapon) {
-      calculateResources(resources, hullType, weapon)
+      resources = calculateResources(resources, hullType, weapon)
       weapons = [ ...weapons, weapon]
     }
     const defence = generateDefence(resources, hullType.hullClass, defences)
     if (defence) {
-      calculateResources(resources, hullType, defence)
+      resources = calculateResources(resources, hullType, defence)
       defences = [ ...defences, defence]
     }
     fitting = generateFitting(resources, hullType.hullClass, fittings)
@@ -221,7 +221,7 @@ function calculateCargoSpace(fittings, hullClass) {
   return [
     ...fittingsWithoutCargo,
     {
-      value: `${cargoCount * cargoMultiplier} tons of Cargo Space`
+      value: `${cargoCount * cargoMultiplier} tons of cargo space`
     }
   ] 
 }
