@@ -70,10 +70,10 @@ export function generateHullType(money) {
   const options = [
     { value: 'Strike Fighter', cost: 200000, hullClass: 'Fighter', power: 5, mass: 2, hard: 1 },
     { value: 'Shuttle', cost: 200000, hullClass: 'Fighter', power: 3, mass: 5, hard: 1 },
-    { value: 'Free Merchant', cost: 500000, hullClass: 'Fighter', power: 10, mass: 15, hard: 2 },
-    { value: 'Patrol Boat', cost: 2500000, hullClass: 'Fighter', power: 15, mass: 10, hard: 4 },
-    { value: 'Corvette', cost: 4000000, hullClass: 'Fighter', power: 15, mass: 15, hard: 6 },
-    { value: 'Heavy Frigate', cost: 7000000, hullClass: 'Fighter', power: 25, mass: 20, hard: 8 },
+    { value: 'Free Merchant', cost: 500000, hullClass: 'Frigate', power: 10, mass: 15, hard: 2 },
+    { value: 'Patrol Boat', cost: 2500000, hullClass: 'Frigate', power: 15, mass: 10, hard: 4 },
+    { value: 'Corvette', cost: 4000000, hullClass: 'Frigate', power: 15, mass: 15, hard: 6 },
+    { value: 'Heavy Frigate', cost: 7000000, hullClass: 'Frigate', power: 25, mass: 20, hard: 8 },
     { value: 'Bulk Freighter', cost: 5000000, hullClass: 'Cruiser', power: 15, mass: 25, hard: 2 },
     { value: 'Fleet Cruiser', cost: 10000000, hullClass: 'Cruiser', power: 50, mass: 30, hard: 10 },
     { value: 'Battleship', cost: 50000000, hullClass: 'Capital', power: 75, mass: 50, hard: 15 },
@@ -156,14 +156,14 @@ export function generateFitting(resources, hullClass, purpose, fittings) {
     { value: 'Shiptender mount',           weight: 10,  group: 'industry',    cost: 25000,   costMultiplier: true,  power: 1, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
     { value: 'Smuggler’s hold',            weight: 10,  group: 'stealth',     cost: 2500,    costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Fighter', multiple: true },
     { value: 'Survey sensor array',        weight: 10,  group: 'exploration', cost: 5000,    costMultiplier: true,  power: 2, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
-    { value: 'System drive',               weight: 10,  group: 'bad-drive',   cost: 0,       costMultiplier: false, power: 1, powerMultiplier: true,  mass: 2,   massMultiplier: true,  hullClass: 'Fighter' },
+    { value: 'System drive',               weight: 2,  group: 'bad-drive',    cost: 0,       costMultiplier: false, power: 1, powerMultiplier: true,  mass: 2,   massMultiplier: true,  hullClass: 'Fighter' },
   //{ value: 'Teleportation pads',         weight: 10,  group: '',            cost: 10000,   costMultiplier: false, power: 0, powerMultiplier: false, mass: 0,   massMultiplier: false, hullClass: 'Frigate' },
     { value: 'Tractor beams',              weight: 10,  group: 'general',     cost: 10000,   costMultiplier: true,  power: 2, powerMultiplier: false, mass: 1,   massMultiplier: false, hullClass: 'Frigate' },
     { value: 'Vehicle transport fittings', weight: 10,  group: 'aggression',  cost: 10000,   costMultiplier: true,  power: 0, powerMultiplier: false, mass: 1,   massMultiplier: true,  hullClass: 'Frigate' },
     { value: 'Workshop',                   weight: 10,  group: 'industry',    cost: 500,     costMultiplier: true,  power: 1, powerMultiplier: false, mass: 0.5, massMultiplier: true,  hullClass: 'Frigate' },
   ]
   const existingGroups = fittings.map(option => option.group)
-  const optionsWithoutDuplicateDrive = options.filter(option => !existingGroups.includes('drive') || !existingGroups.includes('bad-drive') || option.group !== 'drive')
+  const optionsWithoutDuplicateDrive = options.filter(option => (!existingGroups.includes('drive') && !existingGroups.includes('bad-drive')) || option.group !== 'drive')
   return buyRandom(optionsWithoutDuplicateDrive, hullClass, resources, purpose, fittings)
 }
 
