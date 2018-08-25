@@ -18,4 +18,5 @@ Some random generators for [Stars Without Number Revised Edition RPG](https://ww
 
 First configure your aws client by running `aws configure`
 
+`yarn build`
 `serverless client deploy`
