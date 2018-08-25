@@ -3,8 +3,10 @@ import { pickRandom, pickWeightedRandom } from '../util/random'
 import { buyMostExpensive, generateMoney, buyRandom, calculateCostForHullClass } from '../util/money'
 import { calculateMassForHullClass } from '../util/mass'
 import { calculatePowerForHullClass } from '../util/power'
+import { generateShipName } from './name'
 
 export function generateShip() {
+  const name = generateShipName()
   let weapons = []
   let fittings = []
   let defences = []
@@ -37,6 +39,7 @@ export function generateShip() {
   const fittingsWithCounts = map(groupedFittings, group => ({ ...group[0], count: group.length }))
   const fittingsWithCargoSpace = calculateCargoSpace(fittingsWithCounts, hullType.hullClass)
   return {
+    name,
     purpose,
     hullType,
     complication: generateComplication(),

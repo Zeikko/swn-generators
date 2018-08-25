@@ -15,7 +15,7 @@ export default class App extends Component {
   }
 
   render() {
-    const { ship, ship: { purpose, hullType, complication, state, weapons, fittings, defences, resources, startMoney } } = this.state
+    const { ship, ship: { name, purpose, hullType, complication, state, weapons, fittings, defences, resources, startMoney } } = this.state
     return (
       <div>
         <h1>SWN Generators</h1>
@@ -24,12 +24,8 @@ export default class App extends Component {
         <h2>Ship</h2>
         <button onClick={this.generateShip}>Generate</button>
         <Row>
-          <Label red>Name:</Label>
-          <Attribute>Feri Voyager</Attribute>
-        </Row>
-        <Row>
-          <Label red>Captain Name:</Label>
-          <Attribute>Max Kennedy</Attribute>
+          <Label>Name:</Label>
+          <Attribute>{name}</Attribute>
         </Row>
         <Row>
           <Label>Hull Type:</Label>
