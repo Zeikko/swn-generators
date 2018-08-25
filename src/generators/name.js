@@ -17,7 +17,7 @@ function getShipNamePart() {
 function filterWikiDataIds(data, labelName) {
   return data
     .map(item => item[labelName].split(' ').pop())
-    .filter(item => !item.match(/[0-9]+\)$/))
+    .filter(item => !item.match(/[0-9a-z]+\)$/))
     .filter(item => !item.match(/Q[0-9]+$/))
 }
 
