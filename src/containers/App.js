@@ -67,7 +67,7 @@ export default class App extends Component {
           <Label>Fittings:</Label>
           <Attribute>
             <ul>
-              {fittings.map(fitting => <li key={fitting.value}>{fitting.value} { fitting.count && `(${fitting.count})`}</li>)}
+              {fittings.map(fitting => <li key={fitting.value}>{fitting.value} { fitting.count > 1 && `(${fitting.count})`}</li>)}
             </ul>
           </Attribute>
         </Row>
