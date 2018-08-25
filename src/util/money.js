@@ -20,7 +20,8 @@ export function generateMoney(minMoney, maxMoney) {
 
 export function buyRandom(options, hullClass, resources, purpose, existingOptions) {
   const optionsForHullClass = filterByHullClass(options, hullClass)
-  const optionsFilteredByCost = optionsForHullClass.filter(option => calculateCostForHullClass(option, hullClass) <= resources.money)
+  const optionsForMaxHullClass = filterByMaxHullClass(optionsForHullClass, hullClass)
+  const optionsFilteredByCost = optionsForMaxHullClass.filter(option => calculateCostForHullClass(option, hullClass) <= resources.money)
   const optionsFilteredByMass = optionsFilteredByCost.filter(option => calculateMassForHullClass(option, hullClass) <= resources.mass)
   const optionsFilteredByPower = optionsFilteredByMass.filter(option => calculatePowerForHullClass(option, hullClass) <= resources.power)
   const optionsFilteredByHard = optionsFilteredByPower.filter(option => (option.hard || 0) <= resources.hard)
@@ -63,6 +64,26 @@ function filterByHullClass(options, hullClass) {
     }
     if (hullClass === 'Fighter') {
       return option.hullClass === 'Fighter'
+    }
+  })
+}
+
+function filterByMaxHullClass(options, hullClass) {
+  return options.filter((option) => {
+    if (!option.maxHullClass) {
+      return true
+    }
+    if (hullClass === 'Capital') {
+      return option.maxHullClass === 'Capital'
+    }
+    if (hullClass === 'Cruiser') {
+      return option.maxHullClass === 'Capital' || option.maxHullClass === 'Cruiser'
+    }
+    if (hullClass === 'Frigate') {
+      return option.maxHullClass !== 'Fighter'
+    }
+    if (hullClass === 'Fighter') {
+      return true
     }
   })
 }
