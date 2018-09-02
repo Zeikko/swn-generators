@@ -87,34 +87,34 @@ export function generateHullType(money) {
 
 export function generateComplication() {
   const options = [
-    'None',
-    'Spike drive broken',
-    'Life support broken',
-    'Captain wounded',
-    'Pilot lost',
-    'Out of fuel',
-    'Engine failure',
-    'Fuel bleed',
-    'Cargo loss',
-    'Chased by law enforcement',
-    'Chased by pirates',
-    'Mutiny',
-    'Infected crew',
-    'Wanted by the officials',
+    { value: 'None', weight: 100 },
+    { value: 'Spike drive broken', weight: 10 },
+    { value: 'Life support broken', weight: 10 },
+    { value: 'Captain wounded', weight: 10 },
+    { value: 'Pilot lost', weight: 10 },
+    { value: 'Out of fuel', weight: 10 },
+    { value: 'Engine failure', weight: 10 },
+    { value: 'Fuel bleed', weight: 10 },
+    { value: 'Cargo loss', weight: 10 },
+    { value: 'Chased by law enforcement', weight: 10 },
+    { value: 'Chased by pirates', weight: 10 },
+    { value: 'Mutiny', weight: 10 },
+    { value: 'Infected crew', weight: 10 },
+    { value: 'Wanted by the officials', weight: 10 },
   ]
-  return pickRandom(options)
+  return pickWeightedRandom(options)
 }
 
 export function generateState() {
   const options = [
-    'Going to closest spaceport',
-    'Making Spike Drill',
-    'Hiding',
-    'Searching',
-    'Traveling to a world in this sector',
-    'Patrolling',
+    { value: 'Going to the closest spaceport', weight: 10 },
+    { value: 'Making Spike Drill', weight: 10 },
+    { value: 'Hiding', weight: 10 },
+    { value: 'Searching', weight: 10 },
+    { value: 'Traveling to a world in this sector', weight: 10 },
+    { value: 'Patrolling', weight: 10 },
   ]
-  return pickRandom(options)
+  return pickWeightedRandom(options)
 }
 
 export function generateFitting(resources, hullClass, purpose, fittings) {

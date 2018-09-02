@@ -37,11 +37,11 @@ export default class App extends Component {
         </Row>
         <Row>
           <Label>State:</Label>
-          <Attribute>{state}</Attribute>
+          <Attribute>{state.value}</Attribute>
         </Row>
         <Row>
           <Label>Complication:</Label>
-          <Attribute>{complication}</Attribute>
+          <Attribute>{complication.value}</Attribute>
         </Row>
         <Row>
           <Label>Weapons:</Label>
