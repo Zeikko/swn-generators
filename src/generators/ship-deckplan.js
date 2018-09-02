@@ -1,22 +1,18 @@
 import * as d3 from 'd3'
-import { random, last, shuffle } from 'lodash'
+import { random, last, shuffle, flatten, sum } from 'lodash'
 
 const svgWidth = 1000
 const svgHeight = 800
 const svg = d3.select('svg')
-let rooms = []
+let labels = []
+const corridorHeight = 5 * 10
 
 export function generateDeckplan(hullType, fittings) {  
   svg.selectAll("*").remove()
-  rooms = [createBridge()]
-  for(let i = 1; i <= 5; i++) {
-    rooms = [...rooms, ...createSection(hullType)]
-    if (rooms.length > hullType.maxRooms) {
-      break;
-    }
-  }
-  rooms = labelRooms(rooms, fittings)
-  rooms.forEach(room => {
+  getLabels(fittings)
+  const sections = createSections(hullType)
+  const rooms = createRooms(sections)
+  flatten(rooms).forEach(room => {
     svg.append('rect')
       .attr('width', room.width)
       .attr('height', room.height)
@@ -34,6 +30,7 @@ export function generateDeckplan(hullType, fittings) {
 }
 
 const commonLabels = [
+  'Bridge',
   'Crew Quarters',
   'Engineering',
   'Storage',
@@ -41,14 +38,11 @@ const commonLabels = [
   'Engine Room',
 ]
 
-function labelRooms(rooms, fittings) {
+function getLabels(fittings) {
   const fittingLabels = fittings
     .filter(fitting => fitting.room)
     .map(fitting => fitting.value)
-  const labels = shuffle([...commonLabels, ...fittingLabels])
-  return rooms.map(room => {
-    return { ...room, label: room.label || labels.pop() }
-  })
+  labels = shuffle([...commonLabels, ...fittingLabels])
 }
 
 function createBridge() {
@@ -59,63 +53,96 @@ function createBridge() {
   return { width, height, x, y, label: 'Bridge' }
 }
 
-function createSection(hullType) {
-  let sectionRooms = []
-  const sectionWidth = random(10, 20) * 10
-  const maxRooms = Math.min(hullType.maxRooms - rooms.length, 3)
-  const roomCount = random(1, maxRooms)
-  if (roomCount === 1) {
-    sectionRooms = [...sectionRooms, ...createCenterRoom(sectionWidth)]
+function createSections(hullType) {
+  let roomsLeft = hullType.maxRooms
+  let sections = []
+  let x = 10
+  let sectionNumber = 1
+  let corridorLength = random(0, roomsLeft / 2)
+  while(roomsLeft > 0) {
+    const width = random(10, 20) * 10
+    const maxRoomsOnThisSection = Math.min(3, hullType.maxRooms, sectionNumber)
+    let roomCount = random(1, maxRoomsOnThisSection)
+    if (corridorLength > 0) {
+      roomCount = random(Math.min(2, maxRoomsOnThisSection), Math.min(2, maxRoomsOnThisSection))
+    }
+    roomsLeft -= roomCount
+    sections = [...sections, { x, width, roomCount, corridorLength }]
+    x += width
+    sectionNumber += 1
+    corridorLength -= 1
   }
-  if (roomCount === 2) {
-    sectionRooms = [...sectionRooms, ...createDoubleRooms(sectionWidth)]
-  }
-  if (roomCount === 3) {
-    sectionRooms = [...sectionRooms, ...createTripleRooms(sectionWidth)]
-  }
-  return sectionRooms
+  return sections
 }
 
-function createCenterRoom(sectionWidth) {
-  const lastRoom = last(rooms)
-  const width = sectionWidth
-  const height = random(10, 20) * 10
-  const x = lastRoom.x + lastRoom.width
+function createRooms(sections) {
+  const corridor = createCorridor(sections)
+  const rooms = sections.map((section) => {
+    const { roomCount, width, x, corridorLength } = section
+    if (roomCount === 1) {
+      return createCenterRoom(x, width)
+    }
+    if (corridorLength > 0) {
+      return createMainCorridorRooms(x, width, roomCount)
+    }
+    if (roomCount === 2) {
+      return createDoubleRooms(x, width)
+    }
+    if (roomCount === 3) {
+      return createTripleRooms(x, width)
+    }
+  })
+  return corridor ? [corridor, ...rooms] : rooms
+}
+
+function createCenterRoom(x, width) {
+  const height = random(10, 30) * 10
   const y = (svgHeight - height) / 2
-  return [{ width, height, x, y }]
+  return [{ width, height, x, y, label: labels.pop() }]
 }
 
-function createDoubleRooms(sectionWidth) {
-  const lastRoom = last(rooms)
-  const width = sectionWidth
+function createDoubleRooms(x, width) {
   const height = random(10, 20) * 10
-  const x = lastRoom.x + lastRoom.width
   const firstY = svgHeight / 2 - height
   const secondY = svgHeight / 2
-  return [{ width, height, x, y: firstY }, { width, height, x, y: secondY }]
+  return [
+    { width, height, x, y: firstY, label: labels.pop() },
+    { width, height, x, y: secondY, label: labels.pop() }
+  ]
 }
 
-function createTripleRooms(sectionWidth) {
-  const lastRoom = last(rooms)
-  const width = sectionWidth
+function createTripleRooms(x, width) {
   const centerHeight = random(10, 20) * 10
   const sideHeight = random(10, 20) * 10
-  const x = lastRoom.x + lastRoom.width
   const firstY = (svgHeight - centerHeight) / 2
   const secondY = (svgHeight - centerHeight) / 2 - sideHeight
   const thirdY = (svgHeight - centerHeight) / 2 + centerHeight
   return [
-    { width, height: centerHeight, x, y: firstY },
-    { width, height: sideHeight, x, y: secondY },
-    { width, height: sideHeight, x, y: thirdY }
+    { width, height: centerHeight, x, y: firstY, label: labels.pop() },
+    { width, height: sideHeight, x, y: secondY, label: labels.pop() },
+    { width, height: sideHeight, x, y: thirdY, label: labels.pop() }
   ]
 }
 
-function roomIntersects(newRoom) {
-  rooms.forEach(room => {
-    return room._x0 <= newRoom._x1
-      && room._x1 >= newRoom._x0
-      && room._y0 <= newRoom._y1
-      && room._y1 >= newRoom._y0
-  })
+function createMainCorridorRooms(x, width) {
+  const sideHeight = random(10, 20) * 10
+  const firstY = (svgHeight - corridorHeight) / 2
+  const secondY = (svgHeight - corridorHeight) / 2 - sideHeight
+  const thirdY = (svgHeight - corridorHeight) / 2 + corridorHeight
+  return [
+    { width, height: sideHeight, x, y: secondY, label: labels.pop() },
+    { width, height: sideHeight, x, y: thirdY, label: labels.pop() }
+  ]
+}
+
+function createCorridor(sections) {
+  const corridorSections = sections.filter(section => section.corridorLength > 0 && section.roomCount > 1)
+  if(corridorSections.length === 0) {
+    return
+  }
+  const x = corridorSections[0].x
+  const y = (svgHeight - corridorHeight) / 2
+  const width = sum(corridorSections.map(section => section.width))
+  const height = corridorHeight
+  return { width, height, x, y, label: 'Corridor' }
 }
