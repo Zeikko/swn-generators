@@ -94,7 +94,7 @@ function calculateSectionRoomCount(pattern, maxRooms, sectionNumber, roomsLeft) 
     case 'Rectangle':
       return Math.max(1, Math.floor(Math.sqrt(maxRooms)))
     case 'Triangle':
-      return sectionNumber
+      return Math.min(sectionNumber, roomsLeft)
     case 'Random':
       return Math.max(1, random(1, Math.floor(maxRooms / 3)))
   }
