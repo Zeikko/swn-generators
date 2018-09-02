@@ -32,6 +32,10 @@ export default class App extends Component {
           <Attribute>{hullType.value}</Attribute>
         </Row>
         <Row>
+          <Label>Hull Class:</Label>
+          <Attribute>{hullType.hullClass}</Attribute>
+        </Row>
+        <Row>
          <Label>Purpose:</Label>
           <Attribute>{purpose.value}</Attribute>
         </Row>
