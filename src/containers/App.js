@@ -15,7 +15,7 @@ export default class App extends Component {
   }
 
   render() {
-    const { ship, ship: { name, purpose, hullType, complication, state, weapons, fittings, defences, resources, startMoney } } = this.state
+    const { ship, ship: { name, purpose, hullType, complication, state, weapons, fittings, defences, resources, startMoney, crewCount } } = this.state
     return (
       <div>
         <h1>SWN Generators</h1>
@@ -81,6 +81,18 @@ export default class App extends Component {
           <Attribute>{startMoney - resources.money}</Attribute>
         </Row>
         <Row>
+          <Label>6 Months Maintenance Cost:</Label>
+          <Attribute>{(startMoney - resources.money) * 0.05}</Attribute>
+        </Row>
+        <Row>
+          <Label>Crew Count:</Label>
+          <Attribute>{crewCount}</Attribute>
+        </Row>
+        <Row>
+          <Label>12 Months Crew Upkeep:</Label>
+          <Attribute>{crewCount * 43800}</Attribute>
+        </Row>
+        <Row>
           <Label>Mass:</Label>
           <Attribute>{hullType.mass - resources.mass} / {hullType.mass}</Attribute>
         </Row>
@@ -104,7 +116,7 @@ const Row = styled.div`
 
 const Label = styled.div`
   font-weight: bold;
-  width: 8rem;
+  width: 15rem;
   color: ${props => props.red && 'red'};
   text-align: right;
   padding-right: 1rem;

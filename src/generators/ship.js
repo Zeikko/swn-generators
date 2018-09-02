@@ -42,6 +42,7 @@ export function generateShip() {
     name,
     purpose,
     hullType,
+    crewCount: generateCrewCount(hullType.minCrew, hullType.maxCrew, purpose),
     complication: generateComplication(),
     state: generateState(),
     fittings: fittingsWithCargoSpace,
@@ -61,7 +62,7 @@ export function generatePurpose() {
     { value: 'Spy',           weight: 1, aggressiveness: 4,  minMoney: 300000, maxMoney: 8000000, weights: { stealth: 8, drive: 4 } },
     { value: 'Diplomat',      weight: 2, aggressiveness: 2,  minMoney: 300000, maxMoney: 5000000, weights: { drive: 8, travel: 8, luxury: 8, survival: 4 } },
     { value: 'Explorer',      weight: 2, aggressiveness: 2,  minMoney: 300000, maxMoney: 5000000, weights: { drive: 8, travel: 4, exploration: 8, survival: 4 } },
-    { value: 'Military',      weight: 2, aggressiveness: 10, minMoney: 300000, maxMoney: 70000000, weights: { aggression: 8 } },
+    { value: 'Military',      weight: 2, aggressiveness: 10, minMoney: 300000, maxMoney: 70000000, weights: { aggression: 10 } },
     { value: 'Research',      weight: 1, aggressiveness: 2,  minMoney: 300000, maxMoney: 5000000, weights: { research: 8, luxury: 4, colonial: 4 } },
     { value: 'Maintenance',   weight: 2, aggressiveness: 2,  minMoney: 300000, maxMoney: 5000000, weights: { industry: 8, survival: 4 } },
     { value: 'Colonist',      weight: 1, aggressiveness: 2,  minMoney: 3000000, maxMoney: 7000000, weights: { industry: 4, travel: 4, drive: 4, exploration: 4, survival: 4, colonial: 3 } },
@@ -71,18 +72,25 @@ export function generatePurpose() {
 
 export function generateHullType(money) {
   const options = [
-    { value: 'Strike Fighter', cost: 200000, hullClass: 'Fighter', power: 5, mass: 2, hard: 1 },
-    { value: 'Shuttle', cost: 200000, hullClass: 'Fighter', power: 3, mass: 5, hard: 1 },
-    { value: 'Free Merchant', cost: 500000, hullClass: 'Frigate', power: 10, mass: 15, hard: 2 },
-    { value: 'Patrol Boat', cost: 2500000, hullClass: 'Frigate', power: 15, mass: 10, hard: 4 },
-    { value: 'Corvette', cost: 4000000, hullClass: 'Frigate', power: 15, mass: 15, hard: 6 },
-    { value: 'Heavy Frigate', cost: 7000000, hullClass: 'Frigate', power: 25, mass: 20, hard: 8 },
-    { value: 'Bulk Freighter', cost: 5000000, hullClass: 'Cruiser', power: 15, mass: 25, hard: 2 },
-    { value: 'Fleet Cruiser', cost: 10000000, hullClass: 'Cruiser', power: 50, mass: 30, hard: 10 },
-    { value: 'Battleship', cost: 50000000, hullClass: 'Capital', power: 75, mass: 50, hard: 15 },
-    { value: 'Carrier', cost: 60000000, hullClass: 'Capital', power: 50, mass: 100, hard: 4 },
+    { value: 'Strike Fighter', cost: 200000,   hullClass: 'Fighter', power: 5, mass: 2,    hard: 1,  minCrew: 1,   maxCrew: 1 },
+    { value: 'Shuttle',        cost: 200000,   hullClass: 'Fighter', power: 3, mass: 5,    hard: 1,  minCrew: 1,   maxCrew: 10 },
+    { value: 'Free Merchant',  cost: 500000,   hullClass: 'Frigate', power: 10, mass: 15,  hard: 2,  minCrew: 1,   maxCrew: 6 },
+    { value: 'Patrol Boat',    cost: 2500000,  hullClass: 'Frigate', power: 15, mass: 10,  hard: 4,  minCrew: 5,   maxCrew: 20 },
+    { value: 'Corvette',       cost: 4000000,  hullClass: 'Frigate', power: 15, mass: 15,  hard: 6,  minCrew: 10,  maxCrew: 40 },
+    { value: 'Heavy Frigate',  cost: 7000000,  hullClass: 'Frigate', power: 25, mass: 20,  hard: 8,  minCrew: 30,  maxCrew: 120 },
+    { value: 'Bulk Freighter', cost: 5000000,  hullClass: 'Cruiser', power: 15, mass: 25,  hard: 2,  minCrew: 10,  maxCrew: 40 },
+    { value: 'Fleet Cruiser',  cost: 10000000, hullClass: 'Cruiser', power: 50, mass: 30,  hard: 10, minCrew: 50,  maxCrew: 200 },
+    { value: 'Battleship',     cost: 50000000, hullClass: 'Capital', power: 75, mass: 50,  hard: 15, minCrew: 200, maxCrew: 1000 },
+    { value: 'Carrier',        cost: 60000000, hullClass: 'Capital', power: 50, mass: 100, hard: 4,  minCrew: 300, maxCrew: 1500 },
   ]
   return buyMostExpensive(options, money)
+}
+
+export function generateCrewCount(minCrew, maxCrew, purpose) {
+  const crewNeed = 3 + (purpose.weight.aggression || 0) + (purpose.weight.colonial || 0)
+  const randomCrewCount = Math.round(random(minCrew, minCrew * crewNeed))
+  console.log(randomCrewCount, maxCrew)
+  return Math.min(randomCrewCount, maxCrew)
 }
 
 export function generateComplication() {
