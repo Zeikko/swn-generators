@@ -20,9 +20,7 @@ export default class App extends Component {
       <div>
         <h1>SWN Generators</h1>
         <div>This generator is work in progress</div>
-        <div>The red items are placeholders and will not be randomized</div>
         <h2>Ship</h2>
-        <button onClick={this.generateShip}>Generate</button>
         <Row>
           <Label>Name:</Label>
           <Attribute>{name}</Attribute>
@@ -72,15 +70,6 @@ export default class App extends Component {
           </Attribute>
         </Row>
         <Row>
-          <Label red>Appearance: </Label>
-          <Attribute>
-            <ul>
-              <li>Badly Maintained</li>
-              <li>Bulky</li>
-            </ul>
-          </Attribute>
-        </Row>
-        <Row>
           <Label>Cost:</Label>
           <Attribute>{startMoney - resources.money}</Attribute>
         </Row>
@@ -108,6 +97,7 @@ export default class App extends Component {
           <Label>Hard:</Label>
           <Attribute>{hullType.hard - resources.hard} / {hullType.hard}</Attribute>
         </Row>
+        <button onClick={this.generateShip}>Generate</button>
       </div>
     )
   }

@@ -8,12 +8,9 @@ let rooms = []
 
 export function generateDeckplan(hullType, fittings) {  
   svg.selectAll("*").remove()
-  if (hullType.hullClass !== 'Frigate') {
-    return
-  }
   rooms = [createBridge()]
   for(let i = 1; i <= 5; i++) {
-    rooms = [...rooms, ...createSection()]
+    rooms = [...rooms, ...createSection(hullType)]
     if (rooms.length > hullType.maxRooms) {
       break;
     }
@@ -41,7 +38,7 @@ const commonLabels = [
   'Engineering',
   'Storage',
   'Reactor',
-  'Drive',
+  'Engine Room',
 ]
 
 function labelRooms(rooms, fittings) {
@@ -62,10 +59,11 @@ function createBridge() {
   return { width, height, x, y, label: 'Bridge' }
 }
 
-function createSection() {
+function createSection(hullType) {
   let sectionRooms = []
   const sectionWidth = random(10, 20) * 10
-  const roomCount = random(1, 3)
+  const maxRooms = Math.min(hullType.maxRooms - rooms.length, 3)
+  const roomCount = random(1, maxRooms)
   if (roomCount === 1) {
     sectionRooms = [...sectionRooms, ...createCenterRoom(sectionWidth)]
   }
