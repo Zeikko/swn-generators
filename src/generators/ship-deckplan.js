@@ -1,10 +1,9 @@
 import * as d3 from 'd3'
-import { random, last, shuffle, flatten, sum } from 'lodash'
+import { random, last, shuffle, flatten, sum, get, orderBy } from 'lodash'
 
 const svgWidth = 1000
 const svgHeight = 800
 const svg = d3.select('svg')
-let labels = []
 const corridorHeight = 5 * 10
 
 const patterns = [
@@ -17,9 +16,13 @@ export function generateDeckplan(hullType, fittings) {
   svg.selectAll("*").remove()
   getLabels(fittings)
   const pattern = patterns[random(0, patterns.length - 1)]
+  console.log(pattern)
   const sections = createSections(pattern, hullType)
-  const rooms = createRooms(sections)
-  flatten(rooms).forEach(room => {
+  let rooms = createRooms(sections)
+  rooms = flatten(rooms)
+  rooms = labelRooms(sections, rooms, fittings)
+  rooms = rooms.filter(room => room.width !== undefined)
+  rooms.forEach(room => {
     svg.append('rect')
       .attr('width', room.width)
       .attr('height', room.height)
@@ -32,32 +35,8 @@ export function generateDeckplan(hullType, fittings) {
       .attr('x', room.x + room.width / 2)
       .attr('y', room.y + room.height / 2)
       .attr('text-anchor', 'middle')
-      .text(room.label)
+      .text(get(room, 'label.value'))
     })
-}
-
-const commonLabels = [
-  'Bridge',
-  'Crew Quarters',
-  'Engineering',
-  'Storage',
-  'Reactor',
-  'Engine Room',
-]
-
-function getLabels(fittings) {
-  const fittingLabels = fittings
-    .filter(fitting => fitting.room)
-    .map(fitting => fitting.value)
-  labels = shuffle([...commonLabels, ...fittingLabels])
-}
-
-function createBridge() {
-  const width = random(10, 20) * 10
-  const height = random(10, 20) * 10
-  const x = 10
-  const y = (svgHeight - height) / 2
-  return { width, height, x, y, label: 'Bridge' }
 }
 
 function createSections(pattern, hullType) {
@@ -70,7 +49,7 @@ function createSections(pattern, hullType) {
     const width = random(10, 20) * 10
     const roomCount = calculateSectionRoomCount(pattern, hullType.maxRooms, sectionNumber, roomsLeft)
     roomsLeft -= roomCount
-    sections = [...sections, { x, width, roomCount, corridorLength }]
+    sections = [...sections, { x, width, roomCount, corridorLength, sectionNumber }]
     x += width
     sectionNumber += 1
     corridorLength -= 1
@@ -102,75 +81,60 @@ function calculateSectionRoomCount(pattern, maxRooms, sectionNumber, roomsLeft) 
 
 function createRooms(sections) {
   const corridor = createCorridor(sections)
-  const rooms = sections.map((section) => {
-    const { roomCount, width, x, corridorLength } = section
+  let rooms = sections.map((section) => {
+    const { roomCount, width, x, corridorLength, sectionNumber } = section
     if (roomCount === 1) {
-      return createOneRoom(x, width)
+      return createOneRoom(x, width, sectionNumber)
     }
     if (roomCount % 2 === 1) {
-      return createOddRooms(x, width, roomCount)
-    }
-    if (corridorLength > 0) {
-      return createMainCorridorRooms(x, width, roomCount)
+      return createOddRooms(x, width, roomCount, sectionNumber)
     }
     if (roomCount % 2 === 0) {
-      return createEvenRooms(x, width, roomCount)
+      const corridorHeight = corridorLength > 0 ? 50 : 0
+      return createEvenRooms(x, width, roomCount, sectionNumber, corridorHeight)
     }
   })
   return corridor ? [corridor, ...rooms] : rooms
 }
 
-function createOneRoom(x, width) {
+function createOneRoom(x, width, sectionNumber) {
   const height = random(10, 30) * 10
   const y = (svgHeight - height) / 2
-  return [{ width, height, x, y, label: labels.pop() }]
+  return [{ width, height, x, y, sectionNumber, distanceToCenter: 0 }]
 }
 
-function createEvenRooms(x, width, roomCount) {
+function createEvenRooms(x, width, roomCount, sectionNumber, corridorHeight = 50) {
   const height = random(10, 20) * 10
   let rooms = []
   for (let i = 1; i * 2 <= roomCount; i ++) {
-    const upperY = svgHeight / 2 - height * i
-    const lowerY = svgHeight / 2 + (height * (i - 1))
+    const upperY = (svgHeight - corridorHeight) / 2 - height * i
+    const lowerY = (svgHeight - corridorHeight) / 2 + (height * (i - 1)) + corridorHeight
     rooms = [
       ...rooms,
-      { width, height, x, y: upperY, label: labels.pop() },
-      { width, height, x, y: lowerY, label: labels.pop() },
+      { width, height, x, y: upperY, sectionNumber, distanceToCenter: i },
+      { width, height, x, y: lowerY, sectionNumber, distanceToCenter: i },
     ]
   }
   return rooms
 }
 
-function createOddRooms(x, width, roomCount) {
+function createOddRooms(x, width, roomCount, sectionNumber) {
   const centerHeight = random(10, 20) * 10
   const sideHeight = random(10, 20) * 10
   const centerY = (svgHeight - centerHeight) / 2
-  let rooms = [{ width, height: centerHeight, x, y: centerY, label: labels.pop() }]
+  let rooms = [{ width, height: centerHeight, x, y: centerY, sectionNumber, distanceToCenter: 0 }]
   for (let i = 1; i * 2 <= roomCount; i ++) {
     const upperY = (svgHeight - centerHeight) / 2 - (sideHeight * i)
     const lowerY = (svgHeight - centerHeight) / 2 + centerHeight + (sideHeight * (i - 1))
     rooms = [
       ...rooms,
-    { width, height: sideHeight, x, y: upperY, label: labels.pop() },
-    { width, height: sideHeight, x, y: lowerY, label: labels.pop() }
+    { width, height: sideHeight, x, y: upperY, sectionNumber, distanceToCenter: i - 1 },
+    { width, height: sideHeight, x, y: lowerY, sectionNumber, distanceToCenter: i - 1 }
     ]
   }
   return rooms
-  return [
-
-  ]
 }
 
-function createMainCorridorRooms(x, width) {
-  const sideHeight = random(10, 20) * 10
-  const firstY = (svgHeight - corridorHeight) / 2
-  const secondY = (svgHeight - corridorHeight) / 2 - sideHeight
-  const thirdY = (svgHeight - corridorHeight) / 2 + corridorHeight
-  return [
-    { width, height: sideHeight, x, y: secondY, label: labels.pop() },
-    { width, height: sideHeight, x, y: thirdY, label: labels.pop() }
-  ]
-}
 
 function createCorridor(sections) {
   let corridorSections = []
@@ -188,5 +152,51 @@ function createCorridor(sections) {
   const y = (svgHeight - corridorHeight) / 2
   const width = sum(corridorSections.map(section => section.width))
   const height = corridorHeight
-  return { width, height, x, y, label: 'Corridor' }
+  return { width, height, x, y, label: { value: 'Corridor' } }
+}
+
+function labelRooms(sections, rooms, fittings) {
+  const alreadyLabeledRooms = rooms.filter(room => room.label !== undefined)
+  const labels = getLabels(fittings)
+  const roomsToLabel = rooms.map((room, id) => ({ ...room, id }))
+  let labeledRoomsIds = []
+  const labeledRooms = labels.map(label => {
+    const unlabeledRooms = roomsToLabel.filter(room => room.label === undefined && !labeledRoomsIds.includes(room.id))
+    const scoredRooms = scoreRooms(sections, unlabeledRooms, label)
+    const orderedRooms = orderBy(scoredRooms, ['score'], ['desc'])
+    console.log(orderedRooms)
+    const room = { ...orderedRooms[0], label }
+    labeledRoomsIds = [ ...labeledRoomsIds, room.id ]
+    return room
+  })
+  return [ ...alreadyLabeledRooms, ...labeledRooms ]
+}
+
+function scoreRooms(sections, rooms, label) {
+  return rooms.map(room => {
+    const frontScore = 1 - (room.sectionNumber - 1) / (sections.length -1) * label.front
+    console.log(frontScore)
+    return { ...room, score: frontScore * random(0.1,1) }
+  })
+}
+
+const necessaryLabels = [
+  { value: 'Bridge',        front: 1,    center: 0.8, size: 0.5 },
+  { value: 'Crew Quarters', front: 0,    center: 0,   size: 1 },
+  { value: 'Engine Room',   front: -1,   center: 1,   size: 1 },
+]
+
+const bonusLabels = [
+  { value: 'Engineering',   front: 0,    center: 0,   size: 1 },
+  { value: 'Storage',       front: 0,    center: 0,   size: 0.5 },
+  { value: 'Reactor',       front: -0.5, center: 1,   size: 1 },
+]
+
+function getLabels(fittings) {
+  const fittingLabels = fittings
+    .filter(fitting => fitting.room)
+    .map(fitting => ({
+      value: fitting.value
+    }))
+  return [...necessaryLabels, ...fittingLabels, ...bonusLabels ]
 }
