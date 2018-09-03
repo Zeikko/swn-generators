@@ -16,7 +16,6 @@ export function generateDeckplan(hullType, fittings) {
   svg.selectAll("*").remove()
   getLabels(fittings)
   const pattern = patterns[random(0, patterns.length - 1)]
-  console.log(pattern)
   const sections = createSections(pattern, hullType)
   let rooms = createRooms(sections)
   rooms = flatten(rooms)
@@ -28,7 +27,7 @@ export function generateDeckplan(hullType, fittings) {
       .attr('height', room.height)
       .attr('x', room.x)
       .attr('y', room.y)
-      .attr('fill', 'white')
+      .attr('fill', '#BBB')
       .attr('stroke', 'black')
       .attr('stroke-width', 2)
     svg.append('text')
@@ -164,7 +163,6 @@ function labelRooms(sections, rooms, fittings) {
     const unlabeledRooms = roomsToLabel.filter(room => room.label === undefined && !labeledRoomsIds.includes(room.id))
     const scoredRooms = scoreRooms(sections, unlabeledRooms, label)
     const orderedRooms = orderBy(scoredRooms, ['score'], ['desc'])
-    console.log(orderedRooms)
     const room = { ...orderedRooms[0], label }
     labeledRoomsIds = [ ...labeledRoomsIds, room.id ]
     return room
@@ -175,7 +173,6 @@ function labelRooms(sections, rooms, fittings) {
 function scoreRooms(sections, rooms, label) {
   return rooms.map(room => {
     const frontScore = 1 - (room.sectionNumber - 1) / (sections.length -1) * label.front
-    console.log(frontScore)
     return { ...room, score: frontScore * random(0.1,1) }
   })
 }
