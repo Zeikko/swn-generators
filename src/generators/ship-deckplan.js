@@ -27,9 +27,9 @@ export function generateDeckplan(hullType, fittings) {
       .attr('height', room.height)
       .attr('x', room.x)
       .attr('y', room.y)
-      .attr('fill', '#BBB')
-      .attr('stroke', 'black')
-      .attr('stroke-width', 2)
+      .attr('fill', '#EEE')
+      .attr('stroke', '#666')
+      .attr('stroke-width', 5)
     svg.append('text')
       .attr('x', room.x + room.width / 2)
       .attr('y', room.y + room.height / 2)
@@ -179,14 +179,14 @@ function scoreRooms(sections, rooms, label) {
 
 const necessaryLabels = [
   { value: 'Bridge',        front: 1,    center: 0.8, size: 0.5 },
-  { value: 'Crew Quarters', front: 0,    center: 0,   size: 1 },
+  { value: 'Crew Quarters', front: 0.5,  center: 0,   size: 1 },
   { value: 'Engine Room',   front: -1,   center: 1,   size: 1 },
 ]
 
 const bonusLabels = [
   { value: 'Engineering',   front: 0,    center: 0,   size: 1 },
-  { value: 'Storage',       front: 0,    center: 0,   size: 0.5 },
   { value: 'Reactor',       front: -0.5, center: 1,   size: 1 },
+  { value: 'Storage',       front: 0,    center: 0,   size: 0.5 },
 ]
 
 function getLabels(fittings) {
