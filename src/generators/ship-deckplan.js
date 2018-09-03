@@ -59,11 +59,11 @@ function createSections(pattern, hullType) {
 function calculateCorridorLength(pattern, maxRooms) {
   switch (pattern) {
     case 'Rectangle':
-      return random(0, Math.floor(maxRooms / 3))
+      return random(1, Math.floor(maxRooms / 3))
     case 'Triangle':
-      return random(0, 2)
+      return random(1, 2)
     case 'Random':
-      return random(0,Math.floor(maxRooms / 2))
+      return random(1, Math.floor(maxRooms / 2))
   }
 }
 
@@ -80,32 +80,35 @@ function calculateSectionRoomCount(pattern, maxRooms, sectionNumber, roomsLeft) 
 
 function createRooms(sections) {
   const corridor = createCorridor(sections)
-  let rooms = sections.map((section) => {
-    const { roomCount, width, x, corridorLength, sectionNumber } = section
+  let rooms = sections.map((section, i) => {
+    const isLastRoom = i === sections.length - 1
+    const { roomCount, width: sectionWidth, x, corridorLength, sectionNumber } = section
     if (roomCount === 1) {
-      return createOneRoom(x, width, sectionNumber)
+      return createOneRoom({ x, sectionWidth, sectionNumber })
     }
     if (roomCount % 2 === 1) {
-      return createOddRooms(x, width, roomCount, sectionNumber)
+      return createOddRooms({ x, sectionWidth, roomCount, sectionNumber, isLastRoom })
     }
     if (roomCount % 2 === 0) {
       const corridorHeight = corridorLength > 0 ? 50 : 0
-      return createEvenRooms(x, width, roomCount, sectionNumber, corridorHeight)
+      return createEvenRooms({ x, sectionWidth, roomCount, sectionNumber, corridorHeight, isLastRoom })
     }
   })
   return corridor ? [corridor, ...rooms] : rooms
 }
 
-function createOneRoom(x, width, sectionNumber) {
+function createOneRoom({ x, sectionWidth, sectionNumber }) {
+  const width = sectionWidth
   const height = random(10, 30) * 10
   const y = (svgHeight - height) / 2
   return [{ width, height, x, y, sectionNumber, distanceToCenter: 0 }]
 }
 
-function createEvenRooms(x, width, roomCount, sectionNumber, corridorHeight = 50) {
+function createEvenRooms({ x, sectionWidth, roomCount, sectionNumber, corridorHeight = 50, isLastRoom }) {
   const height = random(10, 20) * 10
   let rooms = []
   for (let i = 1; i * 2 <= roomCount; i ++) {
+    const width = isLastRoom ? random(10, 20) * 10 : sectionWidth
     const upperY = (svgHeight - corridorHeight) / 2 - height * i
     const lowerY = (svgHeight - corridorHeight) / 2 + (height * (i - 1)) + corridorHeight
     rooms = [
@@ -117,18 +120,20 @@ function createEvenRooms(x, width, roomCount, sectionNumber, corridorHeight = 50
   return rooms
 }
 
-function createOddRooms(x, width, roomCount, sectionNumber) {
-  const centerHeight = random(10, 20) * 10
+function createOddRooms({ x, sectionWidth, roomCount, sectionNumber, isLastRoom }) {
   const sideHeight = random(10, 20) * 10
+  const centerWidth = isLastRoom ? random(10, 20) * 10 : sectionWidth
+  const centerHeight = random(10, 20) * 10
   const centerY = (svgHeight - centerHeight) / 2
-  let rooms = [{ width, height: centerHeight, x, y: centerY, sectionNumber, distanceToCenter: 0 }]
+  let rooms = [{ width: centerWidth, height: centerHeight, x, y: centerY, sectionNumber, distanceToCenter: 0 }]
   for (let i = 1; i * 2 <= roomCount; i ++) {
+    const sideWidth = isLastRoom ? random(10, 20) * 10 : sectionWidth
     const upperY = (svgHeight - centerHeight) / 2 - (sideHeight * i)
     const lowerY = (svgHeight - centerHeight) / 2 + centerHeight + (sideHeight * (i - 1))
     rooms = [
       ...rooms,
-    { width, height: sideHeight, x, y: upperY, sectionNumber, distanceToCenter: i - 1 },
-    { width, height: sideHeight, x, y: lowerY, sectionNumber, distanceToCenter: i - 1 }
+    { width: sideWidth, height: sideHeight, x, y: upperY, sectionNumber, distanceToCenter: i - 1 },
+    { width: sideWidth, height: sideHeight, x, y: lowerY, sectionNumber, distanceToCenter: i - 1 }
     ]
   }
   return rooms
