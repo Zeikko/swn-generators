@@ -3,7 +3,7 @@ import { random, last, shuffle, flatten, sum, get, orderBy } from 'lodash'
 
 const svgWidth = 1000
 const svgHeight = 800
-const svg = d3.select('#floorplan')
+const svg = d3.select('svg')
 const corridorHeight = 5 * 10
 
 const patterns = [
