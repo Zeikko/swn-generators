@@ -1,8 +1,9 @@
 import * as d3 from 'd3'
 import { random, last, shuffle, flatten, sum, get, orderBy } from 'lodash'
+import { generateDeck } from './deck'
 
 const svgWidth = 1000
-const svgHeight = 800
+const containerHeight = 800
 const svg = d3.select('svg')
 const corridorHeight = 5 * 10
 
@@ -12,6 +13,40 @@ const patterns = [
   'Random',
 ]
 
+export function generateDeckplan(hullType, fittings) { 
+  svg.selectAll('*').remove()
+  const deck = generateDeck({ containerHeight, roomCount: hullType.maxRooms, fittings })
+  renderSections(svg, deck.sections)
+}
+
+function renderSections(svg, sections) {
+  sections.forEach(section => {
+    svg.append('rect')
+      .attr('width', section.width)
+      .attr('height', section.height)
+      .attr('x', section.x)
+      .attr('y', section.y)
+      .attr('stroke', '#666')
+      .attr('fill', 'white')
+      .attr('stroke-width', 5)
+    renderRooms(svg, section.rooms)
+  })
+}
+
+function renderRooms(svg, rooms) {
+  rooms.forEach(room => {
+    svg.append('rect')
+      .attr('width', room.width)
+      .attr('height', room.height)
+      .attr('x', room.x)
+      .attr('y', room.y)
+      .attr('stroke', '#666')
+      .attr('fill', '#EEE')
+      .attr('stroke-width', 3)
+  })
+}
+
+/*
 export function generateDeckplan(hullType, fittings) {  
   svg.selectAll('*').remove()
   getLabels(fittings)
@@ -45,20 +80,21 @@ function createSections(pattern, hullType) {
   let sectionNumber = 1
   let corridorCount = null
   while(roomsLeft > 0) {
-    const width = random(10, 20) * 10
-    const roomCount = calculateSectionRoomCount(pattern, hullType.maxRooms, sectionNumber, roomsLeft)
-    const widthMultiplier = Math.min(random(1, random(1,2)), roomCount)
-    roomsLeft -= roomCount
-    corridorCount = calculateCorridorCount({ previousCorridorCount: corridorCount, roomCount })
-    sections = [...sections, { x, width, roomCount, corridorCount, sectionNumber, widthMultiplier }]
-    x += width * widthMultiplier
+    const lengthY = calculateSectionRoomCount(pattern, hullType.maxRooms, sectionNumber, roomsLeft)
+    const lengthX = Math.min(random(1, Math.min(Math.ceil(roomsLeft / lengthY), 3)), roomsLeft)
+    const roomCount = random(Math.min(lengthY, lengthX), lengthY * lengthX)
+    const sectionWidth = random(10, 20) * 10 * lengthX
+    roomsLeft -= lengthY * lengthX
+    corridorCount = calculateCorridorCount({ previousCorridorCount: corridorCount, lengthY })
+    sections = [...sections, { x, sectionWidth, lengthY, corridorCount, sectionNumber, lengthX, roomCount }]
+    x += sectionWidth
     sectionNumber += 1
   }
   return sections
 }
 
-function calculateCorridorCount({ previousCorridorCount, roomCount }) {
-  if (roomCount % 2 === 0) {
+function calculateCorridorCount({ previousCorridorCount, lengthY }) {
+  if (lengthY % 2 === 0) {
     if (previousCorridorCount & 2 === 1) {
       if (random(1,4) > 1) {
         return previousCorridorCount
@@ -84,80 +120,75 @@ function calculateSectionRoomCount(pattern, maxRooms, sectionNumber, roomsLeft) 
 }
 
 function createRooms(sections) {
+  console.log('sections', sections)
   const corridors = createCorridors(sections)
   let rooms = sections.map((section, i) => {
-    const isLastRoom = i === sections.length - 1
-    const { roomCount, width: sectionWidth, x, corridorLength, sectionNumber, widthMultiplier, corridorCount } = section
-    if (roomCount === 1) {
-      return createOneRoom({ x, sectionWidth, sectionNumber, widthMultiplier })
-    }
-    if (roomCount % 2 === 1) {
-      return createOddRooms({ x, sectionWidth, roomCount, sectionNumber, isLastRoom, widthMultiplier })
-    }
-    if (roomCount % 2 === 0) {
-      const corridorHeight = corridorCount > 0 ? 50 : 0
-      return createEvenRooms({ x, sectionWidth, roomCount, sectionNumber, corridorHeight, isLastRoom, widthMultiplier })
-    }
+    const isLastSection = i === sections.length - 1
+    const { lengthY, corridorCount } = section
+    const corridorHeight = corridorCount > 0 ? 50 : 0
+    console.log('section', section)
+    return createRoom({ ...section, isLastSection, corridorHeight })
   })
+  rooms = flatten(rooms)
+  console.log('rooms', rooms)
+  console.log('corridors', corridors)
   return [...rooms, ...corridors]
 }
 
-function createOneRoom({ x, sectionWidth, sectionNumber, widthMultiplier }) {
-  const width = sectionWidth * widthMultiplier
-  const height = random(10, 40) * 10
-  const y = (svgHeight - height) / 2
-  return [{ width, height, x, y, sectionNumber, distanceToCenter: 0 }]
-}
-
-function createEvenRooms({ x, sectionWidth, roomCount, sectionNumber, corridorHeight, isLastRoom, widthMultiplier }) {
-  const height = random(10, 20) * 10
+function createRoom({ x: sectionX, sectionWidth, lengthY, sectionNumber, corridorHeight, isLastSection, lengthX, roomCount }) {
+  console.log(sectionX, sectionWidth, lengthY, sectionNumber, corridorHeight, isLastSection, lengthX, roomCount)
+  let heights = []
+  for (let i; i <= lengthY; i++) {
+    heights = [...heights, random(10, 20) * 10]
+  }
+  let widths = (let i; i <= lengthY; i++) {
+    widths = [...widths, random(10, 20) * 10 : sectionWidth
+  }
+  width = width / lengthX
   let rooms = []
-  for (let i = 1; i * 2 <= roomCount; i ++) {
-    let width = isLastRoom ? random(10, 20) * 10 : sectionWidth
-    if (i > i) {
-      width = width * random(1, widthMultiplier)
-    } else {
-      width = width * widthMultiplier
+  let roomsLeft = roomCount
+  for (let roomY = 1; roomY <= lengthY; roomY++) {
+    const roomCountY = random(1, Math.ceil(roomsLeft / lengthX))
+    for (let roomX = 1; roomX <= lengthX; roomX++) {
+      const x = sectionX + width * (roomX - 1)
+      const y = (svgHeight - corridorHeight) / 2 - height * roomY
+      rooms = [
+        ...rooms,
+        { width, height, x, y, sectionNumber, distanceToCenter: roomY },
+      ]
     }
-    const upperY = (svgHeight - corridorHeight) / 2 - height * i
-    const lowerY = (svgHeight - corridorHeight) / 2 + (height * (i - 1)) + corridorHeight
-    rooms = [
-      ...rooms,
-      { width, height, x, y: upperY, sectionNumber, distanceToCenter: i },
-      { width, height, x, y: lowerY, sectionNumber, distanceToCenter: i },
-    ]
   }
   return rooms
 }
 
-function createOddRooms({ x, sectionWidth, roomCount, sectionNumber, isLastRoom, widthMultiplier }) {
+function createOddRooms({ x, sectionWidth, lengthY, sectionNumber, isLastSection, lengthX }) {
   const sideHeight = random(10, 20) * 10
-  let centerWidth = isLastRoom ? random(10, 20) * 10 : sectionWidth
-  centerWidth = centerWidth * widthMultiplier
+  let centerWidth = isLastSection ? random(10, 20) * 10 : sectionWidth
+  centerWidth = centerWidth / lengthX
   const centerHeight = random(10, 20) * 10
   const centerY = (svgHeight - centerHeight) / 2
   let rooms = [{ width: centerWidth, height: centerHeight, x, y: centerY, sectionNumber, distanceToCenter: 0 }]
-  for (let i = 1; i * 2 <= roomCount; i ++) {
-    const sideWidth = isLastRoom ? random(10, 20) * 10 : sectionWidth
+  for (let i = 1; i * 2 <= lengthY; i ++) {
+    const sideWidth = isLastSection ? random(10, 20) * 10 : sectionWidth
     const upperY = (svgHeight - centerHeight) / 2 - (sideHeight * i)
     const lowerY = (svgHeight - centerHeight) / 2 + centerHeight + (sideHeight * (i - 1))
-    const sideX = getX(x, sectionWidth, sideWidth, isLastRoom, widthMultiplier)
+    const sideX = getX(x, sectionWidth, sideWidth, isLastSection, lengthX)
     rooms = [
       ...rooms,
-    { width: sideWidth, height: sideHeight, x: sideX, y: upperY, sectionNumber, distanceToCenter: i - 1 },
-    { width: sideWidth, height: sideHeight, x: sideX, y: lowerY, sectionNumber, distanceToCenter: i - 1 }
+    { width: sideWidth, height: sideHeight, x: x, y: upperY, sectionNumber, distanceToCenter: i - 1 },
+    { width: sideWidth, height: sideHeight, x: x, y: lowerY, sectionNumber, distanceToCenter: i - 1 }
     ]
   }
   return rooms
 }
 
-function getX(x, sectionWidth, width, isLastRoom, widthMultiplier) {
-  if (widthMultiplier === 1) {
+function getX(x, sectionWidth, width, isLastSection, lengthX) {
+  if (lengthX === 1) {
     return x
   } else {
-    const difference = sectionWidth * widthMultiplier - width
+    const difference = sectionWidth * lengthX - width
     const align = random(1,3)
-    if (align === 1 || isLastRoom) {
+    if (align === 1 || isLastSection) {
       return x
     } else if (align === 2) {
       return x + difference / 2
@@ -168,7 +199,6 @@ function getX(x, sectionWidth, width, isLastRoom, widthMultiplier) {
 }
 
 function createCorridors(sections) {
-  console.log(sections)
   const height = 50
   const y = (svgHeight - corridorHeight) / 2
   let corridors = []
@@ -182,7 +212,7 @@ function createCorridors(sections) {
     if (section.corridorCount === 0) {
       width = 0
     } else {
-      width = width + section.width * section.widthMultiplier
+      width = width + section.sectionWidth
     }
     if (section.corridorCount > 0) {
       corridors = [...corridors, { width, height, x, y, label: { value: 'Corridor' } }]
@@ -237,3 +267,4 @@ function getLabels(fittings) {
     }))
   return [...necessaryLabels, ...fittingLabels, ...bonusLabels ]
 }
+*/
