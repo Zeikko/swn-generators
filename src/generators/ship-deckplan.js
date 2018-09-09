@@ -1,22 +1,16 @@
 import * as d3 from 'd3'
-import { random, last, shuffle, flatten, sum, get, orderBy } from 'lodash'
+import { random, last, shuffle, flattenDeep, sum, get, orderBy } from 'lodash'
 import { generateDeck } from './deck'
 
-const svgWidth = 1000
 const containerHeight = 800
 const svg = d3.select('svg')
-const corridorHeight = 5 * 10
-
-const patterns = [
-  'Rectangle',
-  'Triangle',
-  'Random',
-]
 
 export function generateDeckplan(hullType, fittings) { 
   svg.selectAll('*').remove()
   const deck = generateDeck({ containerHeight, roomCount: hullType.maxRooms, fittings })
+  const rooms = flattenDeep(deck.sections.map(section => section.rows.map(row => row.rooms)))
   renderSections(svg, deck.sections)
+  renderRooms(svg, rooms)
 }
 
 function renderSections(svg, sections) {
@@ -28,8 +22,8 @@ function renderSections(svg, sections) {
       .attr('y', section.y)
       .attr('stroke', '#666')
       .attr('fill', 'white')
-      .attr('stroke-width', 5)
-    renderRooms(svg, section.rooms)
+      .attr('stroke-width', 3)
+    renderRooms(svg, section.rows)
   })
 }
 
@@ -42,11 +36,17 @@ function renderRooms(svg, rooms) {
       .attr('y', room.y)
       .attr('stroke', '#666')
       .attr('fill', '#EEE')
-      .attr('stroke-width', 3)
+      .attr('stroke-width', 3)   
   })
 }
 
 /*
+const patterns = [
+  'Rectangle',
+  'Triangle',
+  'Random',
+]
+
 export function generateDeckplan(hullType, fittings) {  
   svg.selectAll('*').remove()
   getLabels(fittings)

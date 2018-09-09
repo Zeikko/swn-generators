@@ -1,28 +1,23 @@
-import { random } from 'lodash'
+import { random, max } from 'lodash'
 
-import { generateRoom } from './room'
+import { generateRow } from './row'
 
 const maxRowsCount = 4
+const maxRoomsPerRow = 3
 
 export function generateSection({ containerHeight, x, roomCount }) {
-  const rowCount = generateRowCount(roomCount)
-  const columnCount = Math.ceil(roomCount / rowCount)
-  const width = columnCount * generateRandomLength(2, 5)
+  let rows = generateRowCount(roomCount)
+  const rowCount = rows.length
+  const columnCount = max(rows.map(row => row.rowRoomCount))
+  const width = columnCount * generateRandomLength(2, 4)
   const height = rowCount * generateRandomLength(2, 5)
   const y = (containerHeight - height) / 2
-  console.log({ roomCount, rowCount, columnCount })
-  let rooms = []
-  const roomHeight = height / rowCount
-  const roomWidth = width / columnCount
-  for (let row = 0; row < rowCount; row++) {
-    const roomY = y + row * roomHeight
-    for (let column = 0; column < columnCount; column++) {
-      const roomX = x + column * roomWidth
-      const room = generateRoom({ x: roomX, y: roomY, width: roomWidth, height: roomHeight })
-      rooms = [...rooms, room]
-    }
-  }
-  return { x, y, width, height, rooms }
+  const rowHeight = height / rowCount
+  rows = rows.map((row, i) => {
+    const rowY = y + i * rowHeight
+    return generateRow({ roomCount: row.rowRoomCount, x, y: rowY, width, height: rowHeight })
+  })
+  return { x, y, width, height, rows, rowCount, columnCount }
 }
 
 function generateRandomLength(min, max) {
@@ -30,6 +25,12 @@ function generateRandomLength(min, max) {
 }
 
 function generateRowCount(roomCount) {
-  return random(2, roomCount)
+  let rows = []
+  let roomsLeft = roomCount
+  while (roomsLeft > 0) {
+    const rowRoomCount = random(1, Math.min(roomsLeft, maxRoomsPerRow))
+    rows = [...rows, { rowRoomCount }]
+    roomsLeft = roomsLeft - rowRoomCount
+  }
+  return rows
 }
-
