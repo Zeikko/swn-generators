@@ -58,16 +58,18 @@ function createSections(pattern, hullType) {
 }
 
 function calculateCorridorCount({ previousCorridorCount, roomCount }) {
-  if (roomCount % 2 === 1) {
-    return 0
-  }
-  if (previousCorridorCount) {
-    if (random(1,4) > 1) {
-      return previousCorridorCount
+  if (roomCount % 2 === 0) {
+    if (previousCorridorCount & 2 === 1) {
+      if (random(1,4) > 1) {
+        return previousCorridorCount
+      }
+    } else {
+      return random(0, 1)
     }
   } else {
-    return random(0, 1)
+    return 0
   }
+
 }
 
 function calculateSectionRoomCount(pattern, maxRooms, sectionNumber, roomsLeft) {
@@ -177,7 +179,9 @@ function createCorridors(sections) {
     if (section.corridorCount !== previousCorridorCount) {
       x = section.x
     }
-    if (section.corridorCount > 0) {
+    if (section.corridorCount === 0) {
+      width = 0
+    } else {
       width = width + section.width * section.widthMultiplier
     }
     console.log(width)
