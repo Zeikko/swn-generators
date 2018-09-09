@@ -43,29 +43,30 @@ function createSections(pattern, hullType) {
   let sections = []
   let x = 10
   let sectionNumber = 1
-  let corridorLength = calculateCorridorLength(pattern, hullType.maxRooms)
+  let corridorCount = null
   while(roomsLeft > 0) {
     const width = random(10, 20) * 10
     const roomCount = calculateSectionRoomCount(pattern, hullType.maxRooms, sectionNumber, roomsLeft)
     const widthMultiplier = Math.min(random(1, random(1,2)), roomCount)
     roomsLeft -= roomCount
-    sections = [...sections, { x, width, roomCount, corridorLength, sectionNumber, widthMultiplier }]
+    corridorCount = calculateCorridorCount({ previousCorridorCount: corridorCount, roomCount })
+    sections = [...sections, { x, width, roomCount, corridorCount, sectionNumber, widthMultiplier }]
     x += width * widthMultiplier
     sectionNumber += 1
-    corridorLength -= 1
   }
   return sections
 }
 
-function calculateCorridorLength(pattern, maxRooms) {
-  return 0
-  switch (pattern) {
-    case 'Rectangle':
-      return random(1, Math.floor(maxRooms / 3))
-    case 'Triangle':
-      return random(1, 2)
-    case 'Random':
-      return random(1, Math.floor(maxRooms / 2))
+function calculateCorridorCount({ previousCorridorCount, roomCount }) {
+  if (roomCount % 2 === 1) {
+    return 0
+  }
+  if (previousCorridorCount) {
+    if (random(1,4) > 1) {
+      return previousCorridorCount
+    }
+  } else {
+    return random(0, 1)
   }
 }
 
@@ -81,10 +82,10 @@ function calculateSectionRoomCount(pattern, maxRooms, sectionNumber, roomsLeft) 
 }
 
 function createRooms(sections) {
-  const corridor = createCorridor(sections)
+  const corridors = createCorridors(sections)
   let rooms = sections.map((section, i) => {
     const isLastRoom = i === sections.length - 1
-    const { roomCount, width: sectionWidth, x, corridorLength, sectionNumber, widthMultiplier } = section
+    const { roomCount, width: sectionWidth, x, corridorLength, sectionNumber, widthMultiplier, corridorCount } = section
     if (roomCount === 1) {
       return createOneRoom({ x, sectionWidth, sectionNumber, widthMultiplier })
     }
@@ -92,11 +93,11 @@ function createRooms(sections) {
       return createOddRooms({ x, sectionWidth, roomCount, sectionNumber, isLastRoom, widthMultiplier })
     }
     if (roomCount % 2 === 0) {
-      const corridorHeight = corridorLength > 0 ? 50 : 0
+      const corridorHeight = corridorCount > 0 ? 50 : 0
       return createEvenRooms({ x, sectionWidth, roomCount, sectionNumber, corridorHeight, isLastRoom, widthMultiplier })
     }
   })
-  return corridor ? [corridor, ...rooms] : rooms
+  return [...rooms, ...corridors]
 }
 
 function createOneRoom({ x, sectionWidth, sectionNumber, widthMultiplier }) {
@@ -106,7 +107,7 @@ function createOneRoom({ x, sectionWidth, sectionNumber, widthMultiplier }) {
   return [{ width, height, x, y, sectionNumber, distanceToCenter: 0 }]
 }
 
-function createEvenRooms({ x, sectionWidth, roomCount, sectionNumber, corridorHeight = 50, isLastRoom, widthMultiplier }) {
+function createEvenRooms({ x, sectionWidth, roomCount, sectionNumber, corridorHeight, isLastRoom, widthMultiplier }) {
   const height = random(10, 20) * 10
   let rooms = []
   for (let i = 1; i * 2 <= roomCount; i ++) {
@@ -164,23 +165,29 @@ function getX(x, sectionWidth, width, isLastRoom, widthMultiplier) {
   }
 }
 
-function createCorridor(sections) {
-  let corridorSections = []
-  let corridorNotEnded = true
-  sections.forEach(section => {
-    corridorNotEnded = section.corridorLength > 0 && section.roomCount % 2 === 0
-    if (corridorNotEnded) {
-      corridorSections = [...corridorSections, section]
-    }
-  })
-  if(corridorSections.length === 0) {
-    return
-  }
-  const x = corridorSections[0].x
+function createCorridors(sections) {
+  console.log(sections)
+  const height = 50
   const y = (svgHeight - corridorHeight) / 2
-  const width = sum(corridorSections.map(section => section.width))
-  const height = corridorHeight
-  return { width, height, x, y, label: { value: 'Corridor' } }
+  let corridors = []
+  let previousCorridorCount = null
+  let width = 0
+  let x = sections[0].x
+  sections.forEach(section => {
+    if (section.corridorCount !== previousCorridorCount) {
+      x = section.x
+    }
+    if (section.corridorCount > 0) {
+      width = width + section.width * section.widthMultiplier
+    }
+    console.log(width)
+    if (section.corridorCount > 0) {
+      corridors = [...corridors, { width, height, x, y, label: { value: 'Corridor' } }]
+    }
+    previousCorridorCount = section.corridorCount
+  })
+  console.log(corridors)
+  return corridors
 }
 
 function labelRooms(sections, rooms, fittings) {
