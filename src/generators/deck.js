@@ -2,7 +2,7 @@ import { random } from 'lodash'
 
 import { generateSection } from './section'
 
-const maxRoomsPerSection = 6
+const maxRoomsPerSection = 8
 
 export function generateDeck({ containerHeight, roomCount, fittings }) {
   let sections = []

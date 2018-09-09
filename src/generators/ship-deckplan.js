@@ -9,6 +9,7 @@ export function generateDeckplan(hullType, fittings) {
   svg.selectAll('*').remove()
   const deck = generateDeck({ containerHeight, roomCount: hullType.maxRooms, fittings })
   const rooms = flattenDeep(deck.sections.map(section => section.rows.map(row => row.rooms)))
+  console.log(rooms)
   renderSections(svg, deck.sections)
   renderRooms(svg, rooms)
 }
@@ -36,7 +37,12 @@ function renderRooms(svg, rooms) {
       .attr('y', room.y)
       .attr('stroke', '#666')
       .attr('fill', '#EEE')
-      .attr('stroke-width', 3)   
+      .attr('stroke-width', 3)
+    svg.append('text')
+      .attr('x', room.x + room.width / 2)
+      .attr('y', room.y + room.height / 2)
+      .attr('text-anchor', 'middle')
+      .text(get(room, 'label.value'))
   })
 }
 

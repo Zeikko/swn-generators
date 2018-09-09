@@ -1,3 +1,3 @@
-export function generateRoom({ x, y, width, height}) {
-  return { x, y, width, height }
+export function generateRoom({ x, y, width, height, label }) {
+  return { x, y, width, height, label }
 }
