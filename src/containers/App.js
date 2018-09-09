@@ -18,9 +18,9 @@ export default class App extends Component {
     const { ship, ship: { name, purpose, hullType, complication, state, weapons, fittings, defences, resources, startMoney, crewCount } } = this.state
     return (
       <div>
-        <h1>SWN Generators</h1>
+        <h1>Stars Without Number Generators</h1>
         <div>This generator is work in progress</div>
-        <h2>Ship</h2>
+        <h2>Ship Generator</h2>
         <Row>
           <Label>Name:</Label>
           <Attribute>{name}</Attribute>

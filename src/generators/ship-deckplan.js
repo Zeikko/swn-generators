@@ -1,9 +1,10 @@
 import * as d3 from 'd3'
 import { random, last, shuffle, flatten, sum, get, orderBy } from 'lodash'
+import floor from '../img/floor.png'
 
 const svgWidth = 1000
 const svgHeight = 800
-const svg = d3.select('svg')
+const svg = d3.select('#floorplan')
 const corridorHeight = 5 * 10
 
 const patterns = [
@@ -13,7 +14,7 @@ const patterns = [
 ]
 
 export function generateDeckplan(hullType, fittings) {  
-  svg.selectAll("*").remove()
+  svg.selectAll('*').remove()
   getLabels(fittings)
   const pattern = patterns[random(0, patterns.length - 1)]
   const sections = createSections(pattern, hullType)
@@ -47,9 +48,10 @@ function createSections(pattern, hullType) {
   while(roomsLeft > 0) {
     const width = random(10, 20) * 10
     const roomCount = calculateSectionRoomCount(pattern, hullType.maxRooms, sectionNumber, roomsLeft)
+    const widthMultiplier = Math.min(random(1, random(1,2)), roomCount)
     roomsLeft -= roomCount
-    sections = [...sections, { x, width, roomCount, corridorLength, sectionNumber }]
-    x += width
+    sections = [...sections, { x, width, roomCount, corridorLength, sectionNumber, widthMultiplier }]
+    x += width * widthMultiplier
     sectionNumber += 1
     corridorLength -= 1
   }
@@ -57,6 +59,7 @@ function createSections(pattern, hullType) {
 }
 
 function calculateCorridorLength(pattern, maxRooms) {
+  return 0
   switch (pattern) {
     case 'Rectangle':
       return random(1, Math.floor(maxRooms / 3))
@@ -82,33 +85,38 @@ function createRooms(sections) {
   const corridor = createCorridor(sections)
   let rooms = sections.map((section, i) => {
     const isLastRoom = i === sections.length - 1
-    const { roomCount, width: sectionWidth, x, corridorLength, sectionNumber } = section
+    const { roomCount, width: sectionWidth, x, corridorLength, sectionNumber, widthMultiplier } = section
     if (roomCount === 1) {
-      return createOneRoom({ x, sectionWidth, sectionNumber })
+      return createOneRoom({ x, sectionWidth, sectionNumber, widthMultiplier })
     }
     if (roomCount % 2 === 1) {
-      return createOddRooms({ x, sectionWidth, roomCount, sectionNumber, isLastRoom })
+      return createOddRooms({ x, sectionWidth, roomCount, sectionNumber, isLastRoom, widthMultiplier })
     }
     if (roomCount % 2 === 0) {
       const corridorHeight = corridorLength > 0 ? 50 : 0
-      return createEvenRooms({ x, sectionWidth, roomCount, sectionNumber, corridorHeight, isLastRoom })
+      return createEvenRooms({ x, sectionWidth, roomCount, sectionNumber, corridorHeight, isLastRoom, widthMultiplier })
     }
   })
   return corridor ? [corridor, ...rooms] : rooms
 }
 
-function createOneRoom({ x, sectionWidth, sectionNumber }) {
-  const width = sectionWidth
-  const height = random(10, 30) * 10
+function createOneRoom({ x, sectionWidth, sectionNumber, widthMultiplier }) {
+  const width = sectionWidth * widthMultiplier
+  const height = random(10, 40) * 10
   const y = (svgHeight - height) / 2
   return [{ width, height, x, y, sectionNumber, distanceToCenter: 0 }]
 }
 
-function createEvenRooms({ x, sectionWidth, roomCount, sectionNumber, corridorHeight = 50, isLastRoom }) {
+function createEvenRooms({ x, sectionWidth, roomCount, sectionNumber, corridorHeight = 50, isLastRoom, widthMultiplier }) {
   const height = random(10, 20) * 10
   let rooms = []
   for (let i = 1; i * 2 <= roomCount; i ++) {
-    const width = isLastRoom ? random(10, 20) * 10 : sectionWidth
+    let width = isLastRoom ? random(10, 20) * 10 : sectionWidth
+    if (i > i) {
+      width = width * random(1, widthMultiplier)
+    } else {
+      width = width * widthMultiplier
+    }
     const upperY = (svgHeight - corridorHeight) / 2 - height * i
     const lowerY = (svgHeight - corridorHeight) / 2 + (height * (i - 1)) + corridorHeight
     rooms = [
@@ -120,9 +128,10 @@ function createEvenRooms({ x, sectionWidth, roomCount, sectionNumber, corridorHe
   return rooms
 }
 
-function createOddRooms({ x, sectionWidth, roomCount, sectionNumber, isLastRoom }) {
+function createOddRooms({ x, sectionWidth, roomCount, sectionNumber, isLastRoom, widthMultiplier }) {
   const sideHeight = random(10, 20) * 10
-  const centerWidth = isLastRoom ? random(10, 20) * 10 : sectionWidth
+  let centerWidth = isLastRoom ? random(10, 20) * 10 : sectionWidth
+  centerWidth = centerWidth * widthMultiplier
   const centerHeight = random(10, 20) * 10
   const centerY = (svgHeight - centerHeight) / 2
   let rooms = [{ width: centerWidth, height: centerHeight, x, y: centerY, sectionNumber, distanceToCenter: 0 }]
@@ -130,15 +139,31 @@ function createOddRooms({ x, sectionWidth, roomCount, sectionNumber, isLastRoom 
     const sideWidth = isLastRoom ? random(10, 20) * 10 : sectionWidth
     const upperY = (svgHeight - centerHeight) / 2 - (sideHeight * i)
     const lowerY = (svgHeight - centerHeight) / 2 + centerHeight + (sideHeight * (i - 1))
+    const sideX = getX(x, sectionWidth, sideWidth, isLastRoom, widthMultiplier)
     rooms = [
       ...rooms,
-    { width: sideWidth, height: sideHeight, x, y: upperY, sectionNumber, distanceToCenter: i - 1 },
-    { width: sideWidth, height: sideHeight, x, y: lowerY, sectionNumber, distanceToCenter: i - 1 }
+    { width: sideWidth, height: sideHeight, x: sideX, y: upperY, sectionNumber, distanceToCenter: i - 1 },
+    { width: sideWidth, height: sideHeight, x: sideX, y: lowerY, sectionNumber, distanceToCenter: i - 1 }
     ]
   }
   return rooms
 }
 
+function getX(x, sectionWidth, width, isLastRoom, widthMultiplier) {
+  if (widthMultiplier === 1) {
+    return x
+  } else {
+    const difference = sectionWidth * widthMultiplier - width
+    const align = random(1,3)
+    if (align === 1 || isLastRoom) {
+      return x
+    } else if (align === 2) {
+      return x + difference / 2
+    } else if (align === 3) {
+      return x + difference
+    }
+  }
+}
 
 function createCorridor(sections) {
   let corridorSections = []
@@ -189,9 +214,11 @@ const necessaryLabels = [
 ]
 
 const bonusLabels = [
-  { value: 'Engineering',   front: 0,    center: 0,   size: 1 },
   { value: 'Reactor',       front: -0.5, center: 1,   size: 1 },
   { value: 'Storage',       front: 0,    center: 0,   size: 0.5 },
+  { value: 'Engineering',   front: 0,    center: 0,   size: 1 },
+  { value: 'Crew Quarters', front: 0.5,  center: 0,   size: 1 },
+  { value: 'Life Support',   front: 0,    center: 0,   size: 1 },
 ]
 
 function getLabels(fittings) {
