@@ -184,13 +184,11 @@ function createCorridors(sections) {
     } else {
       width = width + section.width * section.widthMultiplier
     }
-    console.log(width)
     if (section.corridorCount > 0) {
       corridors = [...corridors, { width, height, x, y, label: { value: 'Corridor' } }]
     }
     previousCorridorCount = section.corridorCount
   })
-  console.log(corridors)
   return corridors
 }
 
