@@ -1,6 +1,5 @@
 import * as d3 from 'd3'
 import { random, last, shuffle, flatten, sum, get, orderBy } from 'lodash'
-import floor from '../img/floor.png'
 
 const svgWidth = 1000
 const svgHeight = 800
