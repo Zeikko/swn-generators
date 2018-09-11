@@ -1,6 +1,6 @@
 import { random, groupBy, map, get, find } from 'lodash'
 import { pickRandom, pickWeightedRandom } from '../util/random'
-import { buyMostExpensive, buyRandom, calculateCostForHullClass } from '../util/money'
+import { buyExpensive, buyRandom, calculateCostForHullClass } from '../util/money'
 import { calculateMassForHullClass } from '../util/mass'
 import { calculatePowerForHullClass } from '../util/power'
 import { generateShipName } from './name'
@@ -91,7 +91,7 @@ export function generateHullType(options, money) {
   if (hullType && hullType !== 'Random') {
     return find(hullTypes, { value: hullType})
   }
-  return buyMostExpensive(hullTypes, money)
+  return buyExpensive(hullTypes, money)
 }
 
 export function generateCrewCount(minCrew, maxCrew, purpose) {

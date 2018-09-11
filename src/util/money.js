@@ -1,14 +1,15 @@
-import { sortBy, last, random } from 'lodash'
+import { sortBy, last, random, orderBy } from 'lodash'
 import { calculateMassForHullClass } from './mass'
 import { calculatePowerForHullClass } from './power'
 import { pickWeightedRandom } from './random'
 
-export function buyMostExpensive(options, money) {
+export function buyExpensive(options, money) {
   const purchasableOptions = options.filter(option => option.cost <= money)
   const sortedOptions = sortBy(purchasableOptions, 'cost')
   const { cost: mostExpensivePrice } = last(sortedOptions)
-  const mostExpensiveOptions = options.filter(option => option.cost === mostExpensivePrice)
-  return mostExpensiveOptions[random(0, mostExpensiveOptions.length - 1)]
+  const affordableOptions = options.filter(option => option.cost <= money)
+  const mostExpensiveOptions = orderBy(affordableOptions, ['cost'], ['desc'])
+  return mostExpensiveOptions[random(0, 1)]
 }
 
 export function buyRandom(options, hullClass, resources, purpose, existingOptions) {
