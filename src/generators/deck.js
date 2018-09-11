@@ -1,6 +1,7 @@
-import { random } from 'lodash'
+import { random, flatten } from 'lodash'
 
 import { generateSection } from './section'
+import { generateVerticalCorridor } from './vertical-corridor'
 
 const maxRoomsPerSection = 8
 
@@ -17,11 +18,25 @@ export function generateDeck({ containerHeight, roomCount, labels }) {
   }
   sections = groupLabels(sections, labels)
   let x = 10
-  sections = sections.map(section => {
-    const generatedSection = generateSection({ x, ...section })
+  sections = sections.map((section, i) => {
+    const isFirstSection = i === 0
+    const isLastSection = i === sections.length - 1
+    const generatedSection = generateSection({ x, ...section, isFirstSection, isLastSection })
+    let generatedVerticalCorridor = null
     x = x + generatedSection.width
-    return generatedSection
+    if (!isLastSection && random(0,2) === 0) {
+      generatedVerticalCorridor = generateVerticalCorridor({
+        x,
+        y: generatedSection.y,
+        height: generatedSection.height,
+        roomCount: 1,
+        containerHeight
+      })
+      x = x + generatedVerticalCorridor.width
+    }
+    return generatedVerticalCorridor ? [generatedSection, generatedVerticalCorridor] : generatedSection
   })
+  sections = flatten(sections)
   return { sections }
 }
 

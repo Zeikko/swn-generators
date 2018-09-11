@@ -5,7 +5,7 @@ import { generateRow } from './row'
 const maxRowsCount = 4
 const maxRoomsPerRow = 3
 
-export function generateSection({ containerHeight, x, roomCount, labels }) {
+export function generateSection({ containerHeight, x, roomCount, labels, isFirstSection, isLastSection }) {
   let rows = generateRowCount(roomCount)
   const rowCount = rows.length
   rows = generateRowHeights(rows, rowCount)
@@ -23,7 +23,7 @@ export function generateSection({ containerHeight, x, roomCount, labels }) {
     rowY = rowY + row.height
     return rowWithRooms
   })
-  return { x, y, width, height, rows, rowCount, columnCount, corridorCount, roomCount }
+  return { x, y, width, height, rows, rowCount, columnCount, corridorCount, roomCount, isFirstSection, isLastSection }
 }
 
 function generateRandomLength(min, max) {
