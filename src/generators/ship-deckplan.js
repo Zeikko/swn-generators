@@ -52,6 +52,7 @@ function renderRooms(svg, rooms) {
       .attr('y', room.y + room.height / 2)
       .attr('text-anchor', 'middle')
       .attr('font-size', 14)
+      .attr('z-index', 10)
       .text(get(room, 'label.value'))
   })
 }

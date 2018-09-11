@@ -1,26 +1,47 @@
 import React, { Component } from 'react'
 import styled from 'styled-components'
 import { generateShip } from '../generators/ship'
+import Dropdown from '../components/Dropdown/Dropdown'
+import hullTypes from '../constants/hull-types'
 
 export default class App extends Component {
   constructor() {
     super()
     const ship = generateShip()
-    this.state = { ship }
+    this.state = { ship, options: { } }
   }
 
   generateShip = () => {
-    const ship = generateShip()
+    const ship = generateShip(this.state.options)
     this.setState({ ship })
   }
 
+  setHullType = (hullType) => {
+    this.setState({ options: { hullType } })
+  }
+
   render() {
+    const { options } = this.state
     const { ship, ship: { name, purpose, hullType, complication, state, weapons, fittings, defences, resources, startMoney, crewCount } } = this.state
     return (
       <div>
         <h1>Stars Without Number Generators</h1>
         <div>This generator is work in progress</div>
-        <h2>Ship Generator</h2>
+        <h2>Spaceship Generator</h2>
+        <h3>Options</h3>
+        <Row>
+          <Label>Hull Type:</Label>
+          <Attribute>
+            <Dropdown onChange={this.setHullType} value={options.hullType} options={[{ value: 'Random' }, ...hullTypes]} />
+          </Attribute>
+        </Row>
+        <Row>
+          <Label></Label>
+          <Attribute>
+            <button onClick={this.generateShip}>Generate</button>
+          </Attribute>
+        </Row>
+        <h3>Generated Ship</h3>
         <Row>
           <Label>Name:</Label>
           <Attribute>{name}</Attribute>
@@ -97,7 +118,12 @@ export default class App extends Component {
           <Label>Hard:</Label>
           <Attribute>{hullType.hard - resources.hard} / {hullType.hard}</Attribute>
         </Row>
-        <button onClick={this.generateShip}>Generate</button>
+        <Row>
+          <Label></Label>
+          <Attribute>
+            <button onClick={this.generateShip}>Generate</button>
+          </Attribute>
+        </Row>
       </div>
     )
   }

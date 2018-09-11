@@ -11,13 +11,6 @@ export function buyMostExpensive(options, money) {
   return mostExpensiveOptions[random(0, mostExpensiveOptions.length - 1)]
 }
 
-export function generateMoney(minMoney, maxMoney) {
-  const minx = Math.pow(minMoney, 1/3)
-  const maxx = Math.pow(maxMoney, 1/3)
-  const x = random(minx, maxx)
-  return Math.round(Math.pow(x, 3))
-}
-
 export function buyRandom(options, hullClass, resources, purpose, existingOptions) {
   const optionsForHullClass = filterByHullClass(options, hullClass)
   const optionsForMaxHullClass = filterByMaxHullClass(optionsForHullClass, hullClass)

@@ -1,20 +1,21 @@
-import { random, groupBy, map } from 'lodash'
+import { random, groupBy, map, get, find } from 'lodash'
 import { pickRandom, pickWeightedRandom } from '../util/random'
-import { buyMostExpensive, generateMoney, buyRandom, calculateCostForHullClass } from '../util/money'
+import { buyMostExpensive, buyRandom, calculateCostForHullClass } from '../util/money'
 import { calculateMassForHullClass } from '../util/mass'
 import { calculatePowerForHullClass } from '../util/power'
 import { generateShipName } from './name'
 import { generateDeckplan } from './ship-deckplan'
+import hullTypes from '../constants/hull-types'
 
-export function generateShip() {
+export function generateShip(options) {
   const name = generateShipName()
   let weapons = []
   let fittings = []
   let defences = []
   const purpose = generatePurpose()
   const { aggressiveness } = purpose
-  let startMoney = generateMoney(purpose.minMoney, purpose.maxMoney)
-  const hullType = generateHullType(startMoney)
+  let startMoney = generateMoney(options, purpose.minMoney, purpose.maxMoney)
+  const hullType = generateHullType(options, startMoney)
   let { power, mass, hard } = hullType
   let resources = { money: startMoney, power, mass, hard }
   resources.money = resources.money - hullType.cost
@@ -55,37 +56,42 @@ export function generateShip() {
   }
 }
 
+export function generateMoney(options, minMoney, maxMoney) {
+  const hullType = get(options, 'hullType')
+  if (hullType && hullType !== 'Random') {
+    const { cost } = find(hullTypes, { value: hullType})
+    return cost * random(10,20) / 10
+  }
+  const minx = Math.pow(minMoney, 1/3)
+  const maxx = Math.pow(maxMoney, 1/3)
+  const x = random(minx, maxx)
+  return Math.round(Math.pow(x, 3))
+}
+
+
 export function generatePurpose() {
   const options = [
-    { value: 'Bounty Hunter', weight: 2, aggressiveness: 6,  minMoney: 300000, maxMoney: 8000000, weights: { aggression: 4, travel: 4, drive: 4 }},
-    { value: 'Pirate',        weight: 2, aggressiveness: 8,  minMoney: 300000, maxMoney: 5000000, weights: { aggression: 8, stealth: 4, trade: 4 } },
-    { value: 'Smuggler',      weight: 2, aggressiveness: 6,  minMoney: 800000, maxMoney: 6000000, weights: { aggression: 4, stealth: 8, survival: 4, trade: 8 } },
-    { value: 'Merchant',      weight: 6, aggressiveness: 4,  minMoney: 300000, maxMoney: 8000000, weights: { drive: 4, travel: 4, trade: 8 } },
-    { value: 'Spy',           weight: 1, aggressiveness: 4,  minMoney: 300000, maxMoney: 8000000, weights: { stealth: 8, drive: 4 } },
-    { value: 'Diplomat',      weight: 2, aggressiveness: 2,  minMoney: 300000, maxMoney: 5000000, weights: { drive: 8, travel: 8, luxury: 8, survival: 4 } },
-    { value: 'Explorer',      weight: 2, aggressiveness: 2,  minMoney: 300000, maxMoney: 5000000, weights: { drive: 8, travel: 4, exploration: 8, survival: 4 } },
-    { value: 'Military',      weight: 2, aggressiveness: 10, minMoney: 300000, maxMoney: 70000000, weights: { aggression: 10 } },
-    { value: 'Research',      weight: 1, aggressiveness: 2,  minMoney: 300000, maxMoney: 5000000, weights: { research: 8, luxury: 4, colonial: 4 } },
-    { value: 'Maintenance',   weight: 2, aggressiveness: 2,  minMoney: 300000, maxMoney: 5000000, weights: { industry: 8, survival: 4 } },
-    { value: 'Colonist',      weight: 1, aggressiveness: 2,  minMoney: 3000000, maxMoney: 7000000, weights: { industry: 4, travel: 4, drive: 4, exploration: 4, survival: 4, colonial: 3 } },
+    { value: 'Bounty Hunter', weight: 2, aggressiveness: 6,  minMoney: 300000,  maxMoney: 8000000,   weights: { aggression: 4, travel: 4, drive: 4 }},
+    { value: 'Pirate',        weight: 2, aggressiveness: 8,  minMoney: 300000,  maxMoney: 5000000,   weights: { aggression: 8, stealth: 4, trade: 4 } },
+    { value: 'Smuggler',      weight: 2, aggressiveness: 6,  minMoney: 800000,  maxMoney: 6000000,   weights: { aggression: 4, stealth: 8, survival: 4, trade: 8 } },
+    { value: 'Merchant',      weight: 6, aggressiveness: 4,  minMoney: 300000,  maxMoney: 8000000,   weights: { drive: 4, travel: 4, trade: 8 } },
+    { value: 'Spy',           weight: 1, aggressiveness: 4,  minMoney: 300000,  maxMoney: 8000000,   weights: { stealth: 8, drive: 4 } },
+    { value: 'Diplomat',      weight: 2, aggressiveness: 2,  minMoney: 300000,  maxMoney: 5000000,   weights: { drive: 8, travel: 8, luxury: 8, survival: 4 } },
+    { value: 'Explorer',      weight: 2, aggressiveness: 2,  minMoney: 300000,  maxMoney: 5000000,   weights: { drive: 8, travel: 4, exploration: 8, survival: 4 } },
+    { value: 'Military',      weight: 2, aggressiveness: 10, minMoney: 300000,  maxMoney: 100000000, weights: { aggression: 10 } },
+    { value: 'Research',      weight: 1, aggressiveness: 2,  minMoney: 300000,  maxMoney: 5000000,   weights: { research: 8, luxury: 4, colonial: 4 } },
+    { value: 'Maintenance',   weight: 2, aggressiveness: 2,  minMoney: 300000,  maxMoney: 5000000,   weights: { industry: 8, survival: 4 } },
+    { value: 'Colonist',      weight: 1, aggressiveness: 2,  minMoney: 300000,  maxMoney: 8000000,  weights: { industry: 4, travel: 4, drive: 4, exploration: 4, survival: 4, colonial: 3 } },
   ]
   return pickWeightedRandom(options)
 }
 
-export function generateHullType(money) {
-  const options = [
-    { value: 'Strike Fighter', cost: 200000,   hullClass: 'Fighter', power: 5, mass: 2,    hard: 1,  minCrew: 1,   maxCrew: 1,    maxRooms: 3 },
-    { value: 'Shuttle',        cost: 200000,   hullClass: 'Fighter', power: 3, mass: 5,    hard: 1,  minCrew: 1,   maxCrew: 10,   maxRooms: 3 },
-    { value: 'Free Merchant',  cost: 500000,   hullClass: 'Frigate', power: 10, mass: 15,  hard: 2,  minCrew: 1,   maxCrew: 6,    maxRooms: 6 },
-    { value: 'Patrol Boat',    cost: 2500000,  hullClass: 'Frigate', power: 15, mass: 10,  hard: 4,  minCrew: 5,   maxCrew: 20,   maxRooms: 6 },
-    { value: 'Corvette',       cost: 4000000,  hullClass: 'Frigate', power: 15, mass: 15,  hard: 6,  minCrew: 10,  maxCrew: 40,   maxRooms: 6 },
-    { value: 'Heavy Frigate',  cost: 7000000,  hullClass: 'Frigate', power: 25, mass: 20,  hard: 8,  minCrew: 30,  maxCrew: 120,  maxRooms: 6 },
-    { value: 'Bulk Freighter', cost: 5000000,  hullClass: 'Cruiser', power: 15, mass: 25,  hard: 2,  minCrew: 10,  maxCrew: 40,   maxRooms: 10 },
-    { value: 'Fleet Cruiser',  cost: 10000000, hullClass: 'Cruiser', power: 50, mass: 30,  hard: 10, minCrew: 50,  maxCrew: 200,  maxRooms: 10 },
-    { value: 'Battleship',     cost: 50000000, hullClass: 'Capital', power: 75, mass: 50,  hard: 15, minCrew: 200, maxCrew: 1000, maxRooms: 14 },
-    { value: 'Carrier',        cost: 60000000, hullClass: 'Capital', power: 50, mass: 100, hard: 4,  minCrew: 300, maxCrew: 1500, maxRooms: 14 },
-  ]
-  return buyMostExpensive(options, money)
+export function generateHullType(options, money) {
+  const hullType = get(options, 'hullType')
+  if (hullType && hullType !== 'Random') {
+    return find(hullTypes, { value: hullType})
+  }
+  return buyMostExpensive(hullTypes, money)
 }
 
 export function generateCrewCount(minCrew, maxCrew, purpose) {
@@ -238,10 +244,10 @@ function calculateCargoSpace(fittings, hullClass) {
   let smugglersCount = 0
   let fittingsWithoutCargo = fittings.filter(fitting => {
     if (fitting.value === 'Cargo space') {
-      cargoCount = cargoCount + 1
+      cargoCount = fitting.count
     }
     if (fitting.value === 'Smuggler’s hold') {
-      smugglersCount = smugglersCount + 1
+      smugglersCount = fitting.count
     }
     return fitting.value !== 'Cargo space' && fitting.value !== 'Smuggler’s hold' 
   })
