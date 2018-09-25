@@ -17,7 +17,9 @@
     "prop-types": "^15.6.2",
     "react": "^16.4.2",
     "react-dom": "^16.4.2",
-    "styled-components": "^3.4.3"
+    "styled-components": "^3.4.3",
+    "three.js": "^0.77.1",
+    "three.terrain.js": "^1.6.0"
   },
   "devDependencies": {
     "babel-plugin-transform-class-properties": "^6.24.1",

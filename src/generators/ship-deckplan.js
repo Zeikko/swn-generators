@@ -3,9 +3,10 @@ import { random, last, shuffle, flattenDeep, sum, get, orderBy } from 'lodash'
 import { generateDeck } from './deck'
 
 const containerHeight = 800
-const svg = d3.select('svg')
 
 export function generateDeckplan(hullType, fittings) {
+  const svg = d3.select('svg')
+  console.log(svg)
   const labels = getLabels(fittings)
   svg.selectAll('*').remove()
   const deck = generateDeck({ containerHeight, roomCount: hullType.maxRooms, labels })
